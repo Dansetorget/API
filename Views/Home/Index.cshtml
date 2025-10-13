@@ -2,7 +2,11 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex flex-column justify-content-center align-items-center hero text-center py-5" style="min-height: 80vh;">
+    <h1 class="display-1 my-4">Welcome To Quizzly</h1>
+    <img src="~/images/bear.png" alt="Quiz Image" class="img-fluid" style="max-width: 300px;">
+    <div class="mt-4">
+        <a class="btn btn-primary btn-lg mx-2" asp-controller="Quiz" asp-action="Index">Take a Quiz</a>
+        <a class="btn btn-secondary btn-lg mx-2" asp-controller="Quiz" asp-action="Create">Create a Quiz</a>
+    </div>
 </div>
