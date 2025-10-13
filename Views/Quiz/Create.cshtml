@@ -1,3 +1,4 @@
+@model QuizApp.Models.QuizCreateViewModel
 @{
     ViewData["Title"] = "Create Quiz";
 }
@@ -5,37 +6,34 @@
 <div class="container my-5">
     <h1 class="text-center">Opprett quiz</h1>
 </div>
-<div class="container card p-3 shadow">
+<div class="container card p-3 shadow mb-5">
     <form class="mb-5">
         <div class="mb-3">
         <h5>Tittel</h5>
-            <input type="text" class="form-control" id="title" name="title">
+            <input type="text" class="form-control" id="title" name="title" value="@Model.Title">
         </div>
         <div class="mb-3">
             <h5>Beskrivelse</h5>
-            <textarea class="form-control" id="description" name="description"></textarea>
+            <textarea class="form-control" id="description" name="description">@Model.Description</textarea>
         </div>
     </form>
 
     <h5 class="mb-3">Spørsmål</h5>
     <div class=" d-flex flex-column gap-4">
-        <div class="container card p-2 shadow-sm d-flex flex-row align-items-center justify-content-between">
-            <h5 class="mb-0">Hvor mange tangenter er det på et keyboard?</h5>
-            <div class="d-flex flex-row gap-2">
-                <button class="btn btn-secondary w-fit">Endre</button>
-                <button class="btn btn-outline-danger w-fit">Slett</button>
+        @foreach (var q in Model.Questions)
+        {
+            <div class="container card p-2 shadow-sm d-flex flex-row align-items-center justify-content-between">
+                <h5 class="mb-0">@q.Text</h5>
+                <div class="d-flex flex-row gap-2">
+                    <button class="btn btn-secondary w-fit">Endre</button>
+                    <button class="btn btn-outline-danger w-fit">Slett</button>
+                </div>
             </div>
-        </div>
-        <div class="container card p-2 shadow-sm d-flex flex-row align-items-center justify-content-between">
-            <h5 class="mb-0">Hvor mange tangenter er det på et keyboard?</h5>
-            <div class="d-flex flex-row gap-2">
-                <button class="btn btn-secondary w-fit">Endre</button>
-                <button class="btn btn-outline-danger w-fit">Slett</button>
-            </div>
-        </div>
+        }
     </div>
     <button class="btn btn-outline-secondary w-25  mt-4">Legg til spørsmål</button>
 </div>
+
 
     
 
