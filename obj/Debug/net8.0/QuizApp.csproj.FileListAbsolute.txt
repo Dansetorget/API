@@ -28,3 +28,4 @@
 /Users/tominezakariassen/Documents/WebApplikasjoner/QuizApp/obj/Debug/net8.0/QuizApp.pdb
 /Users/tominezakariassen/Documents/WebApplikasjoner/QuizApp/obj/Debug/net8.0/QuizApp.genruntimeconfig.cache
 /Users/tominezakariassen/Documents/WebApplikasjoner/QuizApp/obj/Debug/net8.0/ref/QuizApp.dll
+/Users/tominezakariassen/Documents/WebApplikasjoner/QuizApp/obj/Debug/net8.0/QuizApp.sourcelink.json
