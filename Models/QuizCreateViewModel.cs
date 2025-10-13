@@ -13,6 +13,14 @@ public class QuestionItemViewModel
 {
     public int Id { get; set; }
     public string Text { get; set; } = string.Empty;
+    public List<QuestionAnswerViewModel> Answers { get; set; } = new();
+}
+
+public class QuestionAnswerViewModel
+{
+    public int Id { get; set; }
+    public string Answer { get; set; } = string.Empty;
+    public bool IsCorrect { get; set; }
 }
 
 
