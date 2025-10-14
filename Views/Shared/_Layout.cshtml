@@ -8,34 +8,40 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Bootstrap5_øving.styles.css" asp-append-version="true" />
 </head>
-<body class="vh-100 d-flex flex-column">
+
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navbar -->
     <header>
-     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">QuizApp</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Quiz" asp-action="Index">Quizzes</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Quiz" asp-action="Create">Create Quiz</a></li>
-                </ul>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">QuizApp</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Quiz" asp-action="Index">Quizzes</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Quiz" asp-action="Create">Create Quiz</a></li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
     </header>
-<main class="flex-fill bg-light">
-    <div class="container-fluid p-0">
+
+    <!-- Main section -->
+    <main class="flex-fill bg-light">
         @RenderBody()
-    </div>
-</main>
-    <footer class="footer py-3 bg-dark text-white">
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer py-3 bg-dark text-white mt-auto">
         <div class="container text-center">
             &copy; 2025 - Bootstrap5_øving -
-            <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-white text-decoration-underline">Privacy</a>
+            <a asp-area="" asp-controller="Home" asp-action="Privacy"
+               class="text-white text-decoration-underline">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
