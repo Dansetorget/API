@@ -1,3 +1,4 @@
+@model List<QuestionItemViewModel>
 @{
     ViewData["Title"] = "Create Quiz";
 }
@@ -18,7 +19,7 @@
 <div class="container mb-5">
     <h5 class="mb-3">Spørsmål</h5>
     <div class=" d-flex flex-column gap-4">
-        @foreach (var q in new List<QuestionItemViewModel>())
+        @foreach (var q in Model)
         {
             var collapseId = $"collapse-q-{q.Id}";
             <div class="container card p-2 shadow-sm">
@@ -45,24 +46,19 @@
                         <p class=" mt-3 mb-0">Svaralternativer</p>
                         <p class="fw-light text-muted">Huk av for riktig svar</p>
                     </div>
-                    <div class="row my-2">
-                    @foreach (var a in new List<QuestionAnswerViewModel>())
-                    {
-                        <div class="col-6 mb-2 d-flex flex-column  form-group">
-                            <input type="text" class="form-control" value="@a.Answer" placeholder="Skriv svar" />
-                            <div class="d-flex flex-row gap-5">
-                                <div class="form-check form-switch">
-                                    <input type="checkbox" class="form-check-input form-switch text-success" @(a.IsCorrect ? "checked" : "")/>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                    </div>
                     <button class="btn btn-outline-primary" type="button">Lagre</button>
                 </div>
             </div>
         }
     </div>
+    <div class="container card shadow-sm mt-3">
+                <div class="d-flex flex-row align-items-center justify-content-between gap-2">
+                    <input type="text" class="form-control" placeholder="Skriv spørsmålstekst" />
+                        
+                        <button class="btn btn-outline-secondary" asp-action="CreateQuestion" asp-controller="Quiz">Legg til</button>
+                </div>
+                
+            </div>
     <button class="btn btn-secondary w-25 mt-4">Legg til spørsmål</button>
     </div>
 </div>
