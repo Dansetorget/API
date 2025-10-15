@@ -23,12 +23,6 @@ public class QuizController : Controller
         return RedirectToAction(nameof(Create));
     }
 
-    [HttpPost]
-    public IActionResult DeleteQuestion(QuestionItemViewModel question)
-    {
-        Questions.Remove(question);
-        return RedirectToAction(nameof(Create));
-    }
 }
 
 
