@@ -52,13 +52,12 @@
         }
     </div>
     <div class="container card shadow-sm mt-3">
-                <div class="d-flex flex-row align-items-center justify-content-between gap-2">
-                    <input type="text" class="form-control" placeholder="Skriv spørsmålstekst" />
-                        
-                        <button class="btn btn-outline-secondary" asp-action="CreateQuestion" asp-controller="Quiz">Legg til</button>
-                </div>
+        <form asp-controller="Quiz" asp-action="CreateQuestion" method="post" class="d-flex gap-2">
+            <input type="text" class="form-control" name="Text" placeholder="Skriv spørsmålstekst" />
+            <button type="submit" class="btn btn-outline-secondary">Legg til</button>
+        </form>
                 
-            </div>
+        </div>
     <button class="btn btn-secondary w-25 mt-4">Legg til spørsmål</button>
     </div>
 </div>
