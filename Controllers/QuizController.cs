@@ -7,7 +7,6 @@ public class QuizController : Controller
 {
     private static readonly List<QuestionItemViewModel> Questions = new()
     {
-        new QuestionItemViewModel { Id = 1, Text = "Hvor mange tangenter er det på et keyboard?" }
     };
 
     [HttpGet]
@@ -20,7 +19,7 @@ public class QuizController : Controller
     public IActionResult CreateQuestion(QuestionItemViewModel question)
     {
         Questions.Add(question);
-        return RedirectToAction(nameof(Create));
+        return RedirectToAction("Create");
     }
 
 }

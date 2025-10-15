@@ -4,7 +4,7 @@
 }
 <div class="d-flex flex-column justify-content-center align-items-center">
     <div class="container shadow card p-3 my-5 rounded">
-        <h1 class="display-5 text-center">Opprett quiz</h1>
+        <h1 class="display-5 text-center underline">Opprett quiz</h1>
         <form>
             <div class="mb-3">
             <h5>Tittel</h5>
@@ -51,13 +51,15 @@
                 </div>
             }
         </div>
-        <div class="container card shadow-sm mt-3">
+        <div class=" mt-4">
             <form asp-controller="Quiz" asp-action="CreateQuestion" method="post" class="d-flex gap-2">
-                <input type="text" class="form-control" name="Text" placeholder="Skriv spørsmålstekst" />
-                <button type="submit" class="btn btn-outline-secondary">Legg til</button>
+                <input type="text" class="form-control py-3 shadow" name="Text" placeholder="Skriv spørsmålstekst " />
+                <div class="bg-white rounded-3">
+                    <button type="submit" class="btn btn-outline-primary text-nowrap py-3">Legg til</button>
+                </div>
             </form>
         </div>
-        <button class="btn btn-secondary w-25 mt-4">Oprett Quiz !!</button>
+        <button class="btn btn-secondary w-25 mt-4">Opprett Quiz !!</button>
         </div>
     </div>
 </div>
