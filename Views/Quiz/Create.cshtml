@@ -49,8 +49,8 @@
             }
         </div>
         <div class=" mt-4">
-            <form asp-controller="Quiz" asp-action="CreateQuestion" method="post" class="d-flex gap-2">
-                <input type="text" class="form-control py-3 shadow" name="Text" placeholder="Skriv spørsmålstekst " />
+            <form asp-controller="Quiz" asp-action="AddQuestionToList" method="post" class="d-flex gap-2">
+                <input type="text" class="form-control py-3 shadow" name="QuestionText" placeholder="Skriv spørsmålstekst " />
                 <div class="bg-white rounded-3">
                     <button type="submit" class="btn btn-outline-primary text-nowrap py-3">Legg til</button>
                 </div>

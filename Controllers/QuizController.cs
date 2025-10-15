@@ -10,6 +10,8 @@ public class QuizController : Controller
 {
     private readonly QuizDbContext _quizDbContext;
 
+    private static List<QuestionViewModel> Questions = new List<QuestionViewModel>();
+
     public QuizController(QuizDbContext quizDbContext)
     {
         _quizDbContext = quizDbContext;
@@ -29,11 +31,16 @@ public class QuizController : Controller
         return View(quizzes);
     }
 
+    public IActionResult AddQuestionToList(QuestionViewModel question){
+        Questions.Add(question);
+        return RedirectToAction("Create");
+    }
+
 
     [HttpGet]
     public IActionResult Create()
     {
-        return View();
+        return View(Questions);
     }
 
     [HttpPost]
