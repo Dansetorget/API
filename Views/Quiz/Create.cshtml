@@ -1,27 +1,24 @@
-@model QuizApp.Models.QuizCreateViewModel
 @{
     ViewData["Title"] = "Create Quiz";
 }
-
-<div class="container my-5">
-    <h1 class="text-center">Opprett quiz</h1>
-</div>
-<form class="mb-5 container">
+<div class="d-flex flex-column justify-content-center align-items-center">
+<div class="container shadow card p-3 my-5 rounded">
+    <h1 class="display-5 text-center">Opprett quiz</h1>
+    <form>
         <div class="mb-3">
         <h5>Tittel</h5>
-            <input type="text" class="form-control" id="title" name="title" value="@Model.Title">
+            <input type="text" class="form-control" id="title" name="title" value="">
         </div>
         <div class="mb-3">
             <h5>Beskrivelse</h5>
-            <textarea class="form-control" id="description" name="description">@Model.Description</textarea>
+            <textarea class="form-control" id="description" name="description"></textarea>
         </div>
     </form>
-<div class="container card p-3 shadow mb-5">
-    
-
+</div>
+<div class="container mb-5">
     <h5 class="mb-3">Spørsmål</h5>
     <div class=" d-flex flex-column gap-4">
-        @foreach (var q in Model.Questions)
+        @foreach (var q in new List<QuestionItemViewModel>())
         {
             var collapseId = $"collapse-q-{q.Id}";
             <div class="container card p-2 shadow-sm">
@@ -49,13 +46,13 @@
                         <p class="fw-light text-muted">Huk av for riktig svar</p>
                     </div>
                     <div class="row my-2">
-                    @foreach (var a in q.Answers)
+                    @foreach (var a in new List<QuestionAnswerViewModel>())
                     {
                         <div class="col-6 mb-2 d-flex flex-column  form-group">
                             <input type="text" class="form-control" value="@a.Answer" placeholder="Skriv svar" />
                             <div class="d-flex flex-row gap-5">
                                 <div class="form-check form-switch">
-                                    <input type="checkbox" class="form-check-input form-switch" @(a.IsCorrect ? "checked" : "")/>
+                                    <input type="checkbox" class="form-check-input form-switch text-success" @(a.IsCorrect ? "checked" : "")/>
                                 </div>
                             </div>
                         </div>
@@ -66,7 +63,9 @@
             </div>
         }
     </div>
-    <button class="btn btn-outline-secondary w-25  mt-4">Legg til spørsmål</button>
+    <button class="btn btn-secondary w-25 mt-4">Legg til spørsmål</button>
+    </div>
+</div>
 </div>
 
 
