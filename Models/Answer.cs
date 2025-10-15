@@ -7,5 +7,5 @@ public class Answer
     public bool IsCorrect { get; set; }
 
     // Navigation property
-    public virtual int QuestionId { get; set; }
+    public virtual Question? Question { get; set; } = default;
 }
