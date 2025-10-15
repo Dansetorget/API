@@ -37,18 +37,43 @@ public class QuizController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Quiz quiz)
+    public async Task<IActionResult> Create(CreateQuizViewModel model)
     {
-        List<QuestionViewModel> questions = [new QuestionViewModel { Id = 1, Text = "Hvor mange tangenter er det på et keyboard?" }];
-
-        [HttpPost]
-        IActionResult CreateQuestion(QuestionViewModel question)
+        if (ModelState.IsValid)
         {
-            questions.Add(question);
-            return View(questions);
-        }
+            var quiz = new Quiz
+            {
+                Title = model.Title,
+                Description = model.Description,
+                Questions = new List<Question>()
+            };
 
-        return View(questions);
+            // Add questions to the quiz
+            foreach (var questionModel in model.Questions)
+            {
+                var question = new Question
+                {
+                    QuestionText = questionModel.QuestionText,
+                    Points = questionModel.Points,
+                    Answers = new List<Answer>()
+                };
+                // Add answers to the question
+                foreach (var answerModel in questionModel.Answers)
+                {
+                    question.Answers.Add(new Answer
+                    {
+                        AnswerText = answerModel.AnswerText,
+                        IsCorrect = answerModel.IsCorrect
+                    });
+                }
+                quiz.Questions.Add(question);
+            }
+
+            await _quizDbContext.AddAsync(quiz);
+            return RedirectToAction(nameof(Index));
+
+        }
+        return View(model);
     }
 }
 
