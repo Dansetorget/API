@@ -3,7 +3,8 @@ namespace QuizApp.Models;
 public class Question
 {
     public int QuestionId { get; set; }
-    public string Text { get; set; } = string.Empty;
+    public string QuestionText { get; set; } = string.Empty;
+    public int Points { get; set; }
 
     // Foreign key
     public int QuizId { get; set; }
