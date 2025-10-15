@@ -4,8 +4,8 @@ public class Quiz
 {
     public int QuizId { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public int QuestionCount { get; set; }
+    public string? Description { get; set; }
+    public int TotalQuestions { get; set; }
     // Navigation property
-    public virtual int QuestionId { get; set; }
+    public virtual List<Question>? Questions { get; set; }
 }
