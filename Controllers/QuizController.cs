@@ -75,6 +75,7 @@ public class QuizController : Controller
         }
         return View(model);
     }
+
 }
 
 

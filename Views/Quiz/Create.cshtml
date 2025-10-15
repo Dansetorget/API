@@ -48,16 +48,21 @@
                 </div>
             }
         </div>
-        <div class="container card shadow-sm mt-3">
-            <div class="d-flex flex-row align-items-center justify-content-between gap-2">
-                <input type="text" class="form-control" placeholder="Skriv spørsmålstekst" />
-
-                <button class="btn btn-outline-secondary" asp-action="CreateQuestion" asp-controller="Quiz">Legg
-                    til</button>
-            </div>
-
+        <div class=" mt-4">
+            <form asp-controller="Quiz" asp-action="CreateQuestion" method="post" class="d-flex gap-2">
+                <input type="text" class="form-control py-3 shadow" name="Text" placeholder="Skriv spørsmålstekst " />
+                <div class="bg-white rounded-3">
+                    <button type="submit" class="btn btn-outline-primary text-nowrap py-3">Legg til</button>
+                </div>
+            </form>
         </div>
-        <button class="btn btn-secondary w-25 mt-4">Legg til spørsmål</button>
+        <button class="btn btn-secondary w-25 mt-4">Opprett Quiz !!</button>
+        </div>
     </div>
 </div>
-</div>
+
+
+
+
+
+
