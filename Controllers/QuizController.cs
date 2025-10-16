@@ -47,14 +47,6 @@ public async Task<IActionResult> Index()
     return View(quizzes);
 }
 
-
-    public async Task<IActionResult> Index()
-    {
-        var quizzes = await _quizDbContext.Quizzes.ToListAsync();
-        return View(quizzes);
-    }
-
-
     public IActionResult AddQuestionToList(QuestionViewModel question)
     {
         Questions.Add(question);
