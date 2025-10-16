@@ -1,0 +1,32 @@
+@model IEnumerable<QuizApp.Models.Quiz>
+
+<h1 class="display-3 text-center fw-bold mt-5">Quizer</h1>
+
+@if (Model == null || !Model.Any())
+{
+    <p>Ingen quizer tilgjengelig.</p>
+}
+else
+{
+     <div class="container shadow card p-3 my-5 rounded">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Tittel</th>
+                <th>Beskrivelse</th>
+                <th>Antall spørsmål</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var quiz in Model)
+        {
+            <tr>
+                <td>@quiz.Title</td>
+                <td>@quiz.Description</td>
+                <td>@quiz.TotalQuestions</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+     </div>
+}
