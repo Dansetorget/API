@@ -8,13 +8,13 @@ namespace QuizApp.Controllers;
 
 public class QuizController : Controller
 {
-    private readonly QuizDbContext _quizDbContext;
+    private readonly IQuizRepository _quizRepository;
 
     private static List<QuestionViewModel> Questions = new List<QuestionViewModel>();
 
-    public QuizController(QuizDbContext quizDbContext)
+    public QuizController(IQuizRepository quizRepository)
     {
-        _quizDbContext = quizDbContext;
+        _quizRepository = quizRepository;
     }
 public async Task<IActionResult> Index()
 {
@@ -22,7 +22,8 @@ public async Task<IActionResult> Index()
     
     if (quizzes == null)
     {
-        quizzes = new List<Quiz>();
+        var quizzes = await _quizRepository.GetAll();
+        return View(quizzes);
     }
     
     // If no quizzes exist in the database, provide a simple in-memory test quiz
@@ -61,19 +62,12 @@ public async Task<IActionResult> Index()
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateQuizViewModel model)
+    public async Task<IActionResult> Create(Quiz quiz)
     {
         if (ModelState.IsValid)
         {
-            var quiz = new Quiz
-            {
-                Title = model.Title,
-                Description = model.Description,
-                Questions = new List<Question>()
-            };
-
             // Add questions to the quiz
-            foreach (var questionModel in model.Questions)
+            foreach (var questionModel in quiz.Questions!)
             {
                 var question = new Question
                 {
@@ -82,7 +76,7 @@ public async Task<IActionResult> Index()
                     Answers = new List<Answer>()
                 };
                 // Add answers to the question
-                foreach (var answerModel in questionModel.Answers)
+                foreach (var answerModel in questionModel.Answers!)
                 {
                     question.Answers.Add(new Answer
                     {
@@ -93,43 +87,43 @@ public async Task<IActionResult> Index()
                 quiz.Questions.Add(question);
             }
 
-            await _quizDbContext.AddAsync(quiz);
+            await _quizRepository.Create(quiz);
             return RedirectToAction(nameof(Index));
 
         }
-        return View(model);
+        return View(quiz);
     }
 
     [HttpGet]
     public async Task<IActionResult> Update(int id)
     {
-        var quiz = await _quizDbContext.Quizzes.FindAsync(id);
+        var quiz = await _quizRepository.GetQuizById(id);
 
         if (quiz == null)
         {
             return BadRequest("Quiz not found for the QuizId");
         }
 
-        // var model = new CreateQuizViewModel
-        // {
-        //     Id = quiz.QuizId,
-        //     Title = quiz.Title,
-        //     Description = quiz.Description!,
-        //     Questions = quiz.Questions!.Select(q => new QuestionViewModel
-        //     {
-        //         Id = q.QuestionId,
-        //         QuestionText = q.QuestionText,
-        //         Points = q.Points,
-        //         Answers = q.Answers!.Select(a => new AnswerViewModel
-        //         {
-        //             Id = a.AnswerId,
-        //             AnswerText = a.AnswerText,
-        //             IsCorrect = a.IsCorrect
-        //         }).ToList()
-        //     }).ToList()
-        // };
+        var model = new CreateQuizViewModel
+        {
+            Id = quiz.QuizId,
+            Title = quiz.Title,
+            Description = quiz.Description!,
+            Questions = quiz.Questions!.Select(q => new QuestionViewModel
+            {
+                Id = q.QuestionId,
+                QuestionText = q.QuestionText,
+                Points = q.Points,
+                Answers = q.Answers!.Select(a => new AnswerViewModel
+                {
+                    Id = a.AnswerId,
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect
+                }).ToList()
+            }).ToList()
+        };
 
-        return View(quiz);
+        return View(model);
     }
 
     [HttpPost]
@@ -142,19 +136,6 @@ public async Task<IActionResult> Index()
 
         if (ModelState.IsValid)
         {
-            // var quiz = await _quizDbContext.Quizzes
-            //     .Include(q => q.Questions!)
-            //     .ThenInclude(q => q.Answers!)
-            //     .FirstOrDefaultAsync(q => q.QuizId == id);
-
-            // if (quiz == null)
-            // {
-            //     return NotFound();
-            // }
-
-            // quiz.Title = model.Title;
-            // quiz.Description = model.Description;
-
             // Update questions
             foreach (var questionModel in quiz.Questions!)
             {
@@ -177,8 +158,7 @@ public async Task<IActionResult> Index()
                 }
             }
 
-            _quizDbContext.Quizzes.Update(quiz);
-            await _quizDbContext.SaveChangesAsync();
+            await _quizRepository.Update(quiz);
             return RedirectToAction(nameof(Index));
 
         }
@@ -189,10 +169,11 @@ public async Task<IActionResult> Index()
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var quiz = await _quizDbContext.Quizzes.FindAsync(id);
+        var quiz = await _quizRepository.GetQuizById(id);
         if (quiz == null)
         {
-            return NotFound();
+            // Log the error (not implemented here)
+            return BadRequest("Quiz not found for the QuizId");
         }
 
         return View(quiz);
@@ -201,14 +182,12 @@ public async Task<IActionResult> Index()
     [HttpPost]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var quiz = await _quizDbContext.Quizzes.FindAsync(id);
-        if (quiz == null)
+        var returnOK = await _quizRepository.Delete(id);
+        if (!returnOK)
         {
-            return NotFound();
+            // log the error (not implemented here)
+            return BadRequest("Quiz deletion failed");
         }
-
-        _quizDbContext.Quizzes.Remove(quiz);
-        await _quizDbContext.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
 
