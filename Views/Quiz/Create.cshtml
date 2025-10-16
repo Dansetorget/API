@@ -43,8 +43,7 @@
                             <div class="col">
                                 <div class="input-group">
                                     <div class="input-group-text">
-                                        <input type="hidden" name="Answers[3].IsCorrect" value="@a.IsCorrect" />
-                                        <input class="form-check-input mt-0" type="checkbox" name="Answers[3].IsCorrect" value="true" aria-label="Checkbox for following text input">
+                                        <input class="form-check-input mt-0" type="checkbox" name="Answers.IsCorrect" checked="@a.IsCorrect" value="@a.IsCorrect" aria-label="Checkbox for following text input">
                                     </div>
                                     <input type="text" class="form-control" value="@a.AnswerText"
                                         placeholder="Skriv svaralternativ tekst" />
@@ -67,14 +66,15 @@
                 <div class="row  gap-2">
                     <div class="input-group mb-3 col">
                         <div class="input-group-text">
-                            <input type="hidden" name="Answers[0].IsCorrect" value="false" />
                             <input class="form-check-input mt-0" type="checkbox" name="Answers[0].IsCorrect" value="true" aria-label="Checkbox for following text input">
+                            <input type="hidden" name="Answers[0].IsCorrect" value="false" />
                         </div>
                         <input type="text" class="form-control" name="Answers[0].AnswerText" aria-label="Text input with checkbox">
                     </div>
                     <div class="input-group mb-3 col">
                         <div class="input-group-text">
                             <input class="form-check-input mt-0" type="checkbox" name="Answers[1].IsCorrect" value="true" aria-label="Checkbox for following text input">
+                            <input type="hidden" name="Answers[1].IsCorrect" value="false" />
                         </div>
                         <input type="text" class="form-control" name="Answers[1].AnswerText" aria-label="Text input with checkbox">
                     </div>
@@ -82,15 +82,15 @@
                 <div class="row  gap-2">
                     <div class="input-group mb-3 col">
                         <div class="input-group-text">
-                            <input type="hidden" name="Answers[2].IsCorrect" value="false" />
                             <input class="form-check-input mt-0" type="checkbox" name="Answers[2].IsCorrect" value="true" aria-label="Checkbox for following text input">
+                            <input type="hidden" name="Answers[2].IsCorrect" value="false" />
                         </div>
                         <input type="text" class="form-control" name="Answers[2].AnswerText" aria-label="Text input with checkbox">
                     </div>
                     <div class="input-group mb-3 col">
                         <div class="input-group-text">
-                            <input type="hidden" name="Answers[3].IsCorrect" value="false" />
                             <input class="form-check-input mt-0" type="checkbox" name="Answers[3].IsCorrect" value="true" aria-label="Checkbox for following text input">
+                            <input type="hidden" name="Answers[3].IsCorrect" value="false" />
                         </div>
                         <input type="text" class="form-control" name="Answers[3].AnswerText" aria-label="Text input with checkbox">
                     </div>
