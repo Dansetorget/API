@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AspNetCoreGeneratedDocument;
 using Microsoft.EntityFrameworkCore;
 using QuizApp.Models;
@@ -51,6 +52,27 @@ public class QuizRepository : IQuizRepository
             return false;
         }
     }
+    public async Task<bool> AddQuestionToQuiz(Quiz quiz, Question question)
+    {
+        try
+        {
+            if (quiz.Questions == null)
+            {
+                quiz.Questions = new List<Question>();
+            }
+
+            quiz.Questions.Add(question);
+            _db.Quizzes.Update(quiz);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception)
+        {
+            // Log the exception (not implemented here)
+            return false;
+        }
+    }
+
 
     public async Task<bool> Update(Quiz quiz)
     {
