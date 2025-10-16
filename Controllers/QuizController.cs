@@ -119,10 +119,6 @@ public class QuizController : Controller
 
         if (ModelState.IsValid)
         {
-            _quizDbContext.Quizzes.Update(quiz);
-            await _quizDbContext.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-
             // var quiz = await _quizDbContext.Quizzes
             //     .Include(q => q.Questions!)
             //     .ThenInclude(q => q.Answers!)
@@ -136,30 +132,32 @@ public class QuizController : Controller
             // quiz.Title = model.Title;
             // quiz.Description = model.Description;
 
-            // // Update questions
-            // foreach (var questionModel in model.Questions)
-            // {
-            //     var question = quiz.Questions!.FirstOrDefault(q => q.QuestionId == questionModel.Id);
-            //     if (question != null)
-            //     {
-            //         question.QuestionText = questionModel.QuestionText;
-            //         question.Points = questionModel.Points;
+            // Update questions
+            foreach (var questionModel in quiz.Questions!)
+            {
+                var question = quiz.Questions!.FirstOrDefault(q => q.QuestionId == questionModel.QuestionId);
+                if (question != null)
+                {
+                    question.QuestionText = questionModel.QuestionText;
+                    question.Points = questionModel.Points;
 
-            //         // Update answers
-            //         foreach (var answerModel in questionModel.Answers)
-            //         {
-            //             var answer = question.Answers!.FirstOrDefault(a => a.AnswerId == answerModel.Id);
-            //             if (answer != null)
-            //             {
-            //                 answer.AnswerText = answerModel.AnswerText;
-            //                 answer.IsCorrect = answerModel.IsCorrect;
-            //             }
-            //         }
-            //     }
-            // }
+                    // Update answers
+                    foreach (var answerModel in questionModel.Answers!)
+                    {
+                        var answer = question.Answers!.FirstOrDefault(a => a.AnswerId == answerModel.AnswerId);
+                        if (answer != null)
+                        {
+                            answer.AnswerText = answerModel.AnswerText;
+                            answer.IsCorrect = answerModel.IsCorrect;
+                        }
+                    }
+                }
+            }
 
-            // await _quizDbContext.SaveChangesAsync();
-            // return RedirectToAction(nameof(Index));
+            _quizDbContext.Quizzes.Update(quiz);
+            await _quizDbContext.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+
         }
 
         return View(quiz);
