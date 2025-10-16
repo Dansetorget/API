@@ -17,21 +17,15 @@ public class QuizController : Controller
         _quizDbContext = quizDbContext;
     }
 
-    public async Task<IActionResult> Table()
+    public async Task<IActionResult> Index()
     {
-        List<Quiz> quizzes = await _quizDbContext.Quizzes.ToListAsync();
-        ViewBag.CurrentViewName = "Table";
+        var quizzes = _quizDbContext.Quizzes.ToListAsync();
         return View(quizzes);
     }
 
-    public async Task<IActionResult> Grid()
-    {
-        List<Quiz> quizzes = await _quizDbContext.Quizzes.ToListAsync();
-        ViewBag.CurrentViewName = "Grid";
-        return View(quizzes);
-    }
 
-    public IActionResult AddQuestionToList(QuestionViewModel question){
+    public IActionResult AddQuestionToList(QuestionViewModel question)
+    {
         Questions.Add(question);
         return RedirectToAction("Create");
     }
