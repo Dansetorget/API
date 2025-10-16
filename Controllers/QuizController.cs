@@ -21,25 +21,23 @@ public class QuizController : Controller
         var allQuizzes = await _quizRepository.GetAll();
         var quizzes = allQuizzes?.ToList() ?? new List<Quiz>();
 
-        // In-memory fallback so the view has something to render if DB is empty
+        // if no quizzes - show a message
         if (quizzes.Count == 0)
         {
-            quizzes.Add(new Quiz
-            {
-                QuizId = 1,
-                Title = "Testquiz",
-                Description = "En liten test for å sjekke at visningen fungerer.",
-                TotalQuestions = 5
-            });
-            quizzes.Add(new Quiz
-            {
-                QuizId = 2,
-                Title = "Testquiz 2",
-                Description = "En annen test for å sjekke at visningen fungerer.",
-                TotalQuestions = 5
-            });
+            return View("NoQuizzes");
         }
         return View(quizzes);
+    }   
+
+    [HttpGet]
+    public async Task<IActionResult> Take(int id) // takes the quiz id and gets the quiz from the database
+    {
+        var quiz = await _quizRepository.GetQuizById(id);
+        if (quiz == null)
+        {
+            return NotFound();
+        }
+        return View(quiz);
     }
 
     public IActionResult AddQuestionToList(QuestionViewModel question)

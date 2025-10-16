@@ -29,8 +29,8 @@
                             <small class="text-muted mb-3">@quiz.TotalQuestions @(quiz.TotalQuestions == 1 ? "spørsmål" : "spørsmål")</small>
                             <p class="card-text flex-grow-1">@(!string.IsNullOrWhiteSpace(quiz.Description) ? quiz.Description : "Ingen beskrivelse")</p>
                             <div class="mt-3 d-flex justify-content-end">
-                                <a asp-controller="Quiz" asp-action="StartQuiz" asp-route-id="@quiz.QuizId" class="btn btn-outline-primary">
-                                    Start Quiz 🐾
+                                <a asp-controller="Quiz" asp-action="Take" asp-route-id="@quiz.QuizId" class="btn btn-outline-primary">
+                                    Take Quiz 🐾
                                 </a>
                             </div>
                         </div>
