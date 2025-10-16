@@ -5,7 +5,7 @@
 <div class="d-flex flex-column justify-content-center align-items-center">
     <div class="container shadow card p-3 my-5 rounded">
         <h1 class="display-5 text-center">Opprett quiz</h1>
-        <form>
+        <form asp-controller="Quiz" asp-action="Create" method="post" id="createQuizForm">
             <div class="mb-3">
                 <h5>Tittel</h5>
                 <input type="text" class="form-control" id="title" name="title" value="">
@@ -100,7 +100,7 @@
                     </div>
             </form>
         </div>
-        <button class="btn btn-secondary w-25 mt-4">Opprett Quiz !!</button>
+        <button type="submit" form="createQuizForm" class="btn btn-secondary w-25 mt-4">Opprett Quiz</button>
         </div>
     </div>
 </div>
