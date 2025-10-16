@@ -18,15 +18,10 @@ public class QuizController : Controller
     }
 public async Task<IActionResult> Index()
 {
-    List<Quiz> quizzes = await _quizDbContext.Quizzes.ToListAsync();
-    
-    if (quizzes == null)
-    {
-        var quizzes = await _quizRepository.GetAll();
-        return View(quizzes);
-    }
-    
-    // If no quizzes exist in the database, provide a simple in-memory test quiz
+    var allQuizzes = await _quizRepository.GetAll();
+    var quizzes = allQuizzes?.ToList() ?? new List<Quiz>();
+
+    // In-memory fallback so the view has something to render if DB is empty
     if (quizzes.Count == 0)
     {
         quizzes.Add(new Quiz
@@ -36,15 +31,14 @@ public async Task<IActionResult> Index()
             Description = "En liten test for å sjekke at visningen fungerer.",
             TotalQuestions = 5
         });
+        quizzes.Add(new Quiz
+        {
+            QuizId = 2,
+            Title = "Testquiz 2",
+            Description = "En annen test for å sjekke at visningen fungerer.",
+            TotalQuestions = 5
+        });
     }
-    quizzes.Add(new Quiz
-    {
-        QuizId = 2,
-        Title = "Testquiz 2",
-        Description = "En annen test for å sjekke at visningen fungerer.",
-        TotalQuestions = 5
-    });
-    
     return View(quizzes);
 }
 
