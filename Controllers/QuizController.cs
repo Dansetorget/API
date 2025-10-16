@@ -16,26 +16,37 @@ public class QuizController : Controller
     {
         _quizDbContext = quizDbContext;
     }
-
-    public async Task<IActionResult> Index()
+public async Task<IActionResult> Index()
+{
+    List<Quiz> quizzes = await _quizDbContext.Quizzes.ToListAsync();
+    
+    if (quizzes == null)
     {
-        List<Quiz> quizzes = await _quizDbContext.Quizzes.ToListAsync();
-        if (quizzes == null || quizzes.Count == 0)
-        {
-            quizzes = new List<Quiz>
-            {
-                new Quiz
-                {
-                    QuizId = 1,
-                    Title = "Testquiz",
-                    Description = "En liten test for å sjekke at visningen fungerer.",
-                    TotalQuestions = 5
-                }
-            };
-        }
-
-        return View(quizzes);
+        quizzes = new List<Quiz>();
     }
+    
+    // If no quizzes exist in the database, provide a simple in-memory test quiz
+    if (quizzes.Count == 0)
+    {
+        quizzes.Add(new Quiz
+        {
+            QuizId = 1,
+            Title = "Testquiz",
+            Description = "En liten test for å sjekke at visningen fungerer.",
+            TotalQuestions = 5
+        });
+    }
+    quizzes.Add(new Quiz
+    {
+        QuizId = 2,
+        Title = "Testquiz 2",
+        Description = "En annen test for å sjekke at visningen fungerer.",
+        TotalQuestions = 5
+    });
+    
+    return View(quizzes);
+}
+
 
     public async Task<IActionResult> Table()
     {
