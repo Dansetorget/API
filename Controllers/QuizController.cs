@@ -19,7 +19,7 @@ public class QuizController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var quizzes = _quizDbContext.Quizzes.ToListAsync();
+        var quizzes = await _quizDbContext.Quizzes.ToListAsync();
         return View(quizzes);
     }
 
