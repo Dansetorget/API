@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApp.DAL;
@@ -9,37 +10,40 @@ namespace QuizApp.Controllers;
 public class QuizController : Controller
 {
     private readonly IQuizRepository _quizRepository;
+    private readonly IQuestionRepository _questionRepository;
+    private readonly IAnswerRepository _answerRepository;
+
 
     private static List<QuestionViewModel> Questions = new List<QuestionViewModel>();
 
-    public QuizController(IQuizRepository quizRepository)
+    public QuizController(IQuizRepository quizRepository, IQuestionRepository questionRepository, IAnswerRepository answerRepository)
     {
         _quizRepository = quizRepository;
+        _questionRepository = questionRepository;
+        _answerRepository = answerRepository;
     }
     public async Task<IActionResult> Index()
     {
         var allQuizzes = await _quizRepository.GetAll();
         var quizzes = allQuizzes?.ToList() ?? new List<Quiz>();
 
-        // In-memory fallback so the view has something to render if DB is empty
+        // if no quizzes - show a message
         if (quizzes.Count == 0)
         {
-            quizzes.Add(new Quiz
-            {
-                QuizId = 1,
-                Title = "Testquiz",
-                Description = "En liten test for å sjekke at visningen fungerer.",
-                TotalQuestions = 5
-            });
-            quizzes.Add(new Quiz
-            {
-                QuizId = 2,
-                Title = "Testquiz 2",
-                Description = "En annen test for å sjekke at visningen fungerer.",
-                TotalQuestions = 5
-            });
+            return View("NoQuizzes");
         }
         return View(quizzes);
+    }   
+
+    [HttpGet]
+    public async Task<IActionResult> Take(int id) // takes the quiz id and gets the quiz from the database
+    {
+        var quiz = await _quizRepository.GetQuizById(id);
+        if (quiz == null)
+        {
+            return NotFound();
+        }
+        return View(quiz);
     }
 
     public IActionResult AddQuestionToList(QuestionViewModel question)
@@ -56,17 +60,24 @@ public class QuizController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Quiz quiz)
+    public async Task<IActionResult> Create(CreateQuizViewModel quizModel)
     {
         if (ModelState.IsValid)
         {
+            var quiz = new Quiz
+            {
+                Title = quizModel.Title,
+                Description = quizModel.Description,
+                TotalQuestions = Questions.Count,
+                Questions = new List<Question>()
+            };
             // Add questions to the quiz
-            foreach (var questionModel in quiz.Questions!)
+            // loop through the static Questions list
+            foreach (var questionModel in Questions)
             {
                 var question = new Question
                 {
                     QuestionText = questionModel.QuestionText,
-                    Points = questionModel.Points,
                     Answers = new List<Answer>()
                 };
                 // Add answers to the question
@@ -79,13 +90,13 @@ public class QuizController : Controller
                     });
                 }
                 quiz.Questions.Add(question);
+                //await _quizRepository.AddQuestionToQuiz(quiz, question);
             }
 
             await _quizRepository.Create(quiz);
-            return RedirectToAction(nameof(Index));
 
         }
-        return View(quiz);
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
