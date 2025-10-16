@@ -12,6 +12,9 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
+// Repositories
+builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
