@@ -16,31 +16,31 @@ public class QuizController : Controller
     {
         _quizRepository = quizRepository;
     }
-public async Task<IActionResult> Index()
-{
-    var allQuizzes = await _quizRepository.GetAll();
-    var quizzes = allQuizzes?.ToList() ?? new List<Quiz>();
-
-    // In-memory fallback so the view has something to render if DB is empty
-    if (quizzes.Count == 0)
+    public async Task<IActionResult> Index()
     {
-        quizzes.Add(new Quiz
+        var allQuizzes = await _quizRepository.GetAll();
+        var quizzes = allQuizzes?.ToList() ?? new List<Quiz>();
+
+        // In-memory fallback so the view has something to render if DB is empty
+        if (quizzes.Count == 0)
         {
-            QuizId = 1,
-            Title = "Testquiz",
-            Description = "En liten test for å sjekke at visningen fungerer.",
-            TotalQuestions = 5
-        });
-        quizzes.Add(new Quiz
-        {
-            QuizId = 2,
-            Title = "Testquiz 2",
-            Description = "En annen test for å sjekke at visningen fungerer.",
-            TotalQuestions = 5
-        });
+            quizzes.Add(new Quiz
+            {
+                QuizId = 1,
+                Title = "Testquiz",
+                Description = "En liten test for å sjekke at visningen fungerer.",
+                TotalQuestions = 5
+            });
+            quizzes.Add(new Quiz
+            {
+                QuizId = 2,
+                Title = "Testquiz 2",
+                Description = "En annen test for å sjekke at visningen fungerer.",
+                TotalQuestions = 5
+            });
+        }
+        return View(quizzes);
     }
-    return View(quizzes);
-}
 
     public IActionResult AddQuestionToList(QuestionViewModel question)
     {
