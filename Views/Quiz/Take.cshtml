@@ -3,6 +3,8 @@
     ViewData["Title"] = "Take Quiz";
 }
 
+ 
+ <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-primary m-2">Back</a>
 <div class="d-flex flex-column justify-content-center align-items-center">
 <h1 class="display-5 fw-bold mt-5">Quiz</h1>
     <h2> @(Model?.Title ?? "Untitled quiz") </h2>
