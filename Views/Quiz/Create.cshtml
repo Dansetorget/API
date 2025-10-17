@@ -43,7 +43,8 @@
                             <div class="col">
                                 <div class="input-group">
                                     <div class="input-group-text">
-                                        <input class="form-check-input mt-0" type="checkbox" name="Answers.IsCorrect" checked="@a.IsCorrect" value="@a.IsCorrect" aria-label="Checkbox for following text input">
+                                        <input class="form-check-input mt-0" type="checkbox" name="Answers[3].IsCorrect" checked="@a.IsCorrect" aria-label="Checkbox for following text input">
+                                        <input type="hidden" name="Answers[3].IsCorrect" value="@a.IsCorrect" />
                                     </div>
                                     <input type="text" class="form-control" value="@a.AnswerText"
                                         placeholder="Skriv svaralternativ tekst" />
