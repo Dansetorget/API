@@ -52,12 +52,28 @@ public class QuizController : Controller
         return RedirectToAction("Create");
     }
 
-    public IActionResult DeleteQuestion(int id)
+    public IActionResult DeleteQuestionFromList(int id)
     {
         var question = Questions.FirstOrDefault(q => q.Id == id);
         if (question != null)
         {
             Questions.Remove(question);
+        }
+        return RedirectToAction("Create");
+    }
+
+    public IActionResult UpdateQuestionInList(QuestionViewModel question)
+    {
+        var questionToUpdate = Questions[question.Id];
+        if (questionToUpdate != null)
+        {
+            questionToUpdate.QuestionText = question.QuestionText;
+            Console.WriteLine(question.Answers.Count+"-------");
+            for (var i = 0; i < question.Answers.Count; i++)
+            {
+                questionToUpdate.Answers[i].AnswerText = question.Answers[i].AnswerText;
+                questionToUpdate.Answers[i].IsCorrect = question.Answers[i].IsCorrect;
+            }
         }
         return RedirectToAction("Create");
     }

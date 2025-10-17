@@ -19,42 +19,56 @@
     <div class="container mb-5">
         <h5 class="mb-3">Spørsmål</h5>
         <div class=" d-flex flex-column gap-4">
-            @foreach (var q in Model)
+            @for (var i = 0; i < Model.Count; i++)
             {
-                var collapseId = $"collapse-q-{q.Id}";
-                <div class="container card p-2 shadow-sm">
+                var collapseId = $"collapse-q-{i}";
+                <form asp-controller="Quiz" asp-action="UpdateQuestionInList" asp-route-id="@i" method="post" class="container card p-2 shadow-sm">
+                    <input type="hidden" name="Id" value="@i" />
                     <div class="d-flex flex-row align-items-center justify-content-between">
-                        <h5 class="mb-0">@q.QuestionText</h5>
+                        <h5 class="mb-0">@Model[i].QuestionText</h5>
                         <div class="d-flex flex-row gap-2">
                             <button type="button" class="btn btn-secondary w-fit" data-bs-toggle="collapse"
                                 data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
                                 Endre
                             </button>
-                            <a asp-controller="Quiz" asp-action="DeleteQuestion" asp-route-id="@q.Id" class="btn btn-outline-danger w-fit">Slett</a>
+                            <a asp-controller="Quiz" asp-action="DeleteQuestionFromList" asp-route-id="@i" class="btn btn-outline-danger w-fit">Slett</a>
                         </div>
                     </div>
                     <div id="@collapseId" class="collapse mt-3">
+                    <input type="text" class="form-control mb-2" name="QuestionText" value="@Model[i].QuestionText" />
                         <div>
                             <p class=" mt-3 mb-0">Svaralternativer</p>
                             <p class="fw-light text-muted">Huk av for riktig svar</p>
                         </div>
                         <div class="row row-cols-2 g-2">
-                        @foreach (var a in q.Answers){
+                        @for (var j = 0; j < Model[i].Answers.Count; j++)
+                        {
                             <div class="col">
                                 <div class="input-group">
+                                    <input type="hidden" name="Answers[@j].IsCorrect" value="false" />
                                     <div class="input-group-text">
-                                        <input class="form-check-input mt-0" type="checkbox" name="Answers[3].IsCorrect" checked="@a.IsCorrect" aria-label="Checkbox for following text input">
-                                        <input type="hidden" name="Answers[3].IsCorrect" value="@a.IsCorrect" />
+                                        <input class="form-check-input mt-0"
+                                            type="checkbox"
+                                            name="Answers[@j].IsCorrect"
+                                            value="true"
+                                            @(Model[i].Answers[j].IsCorrect ? "checked" : "") />
                                     </div>
-                                    <input type="text" class="form-control" value="@a.AnswerText"
-                                        placeholder="Skriv svaralternativ tekst" />
+
+                                    <input type="text"
+                                        class="form-control"
+                                        name="Answers[@j].AnswerText"
+                                        value="@Model[i].Answers[j].AnswerText" />
+
+                                    <input type="hidden"
+                                        name="Answers[@j].Id"
+                                        value="@Model[i].Answers[j].Id" />
                                 </div>
                             </div>
                         }
                         </div>
-                        <button class="btn btn-outline-primary mt-2" type="button">Lagre</button>
+                        <button type="submit" class="btn btn-outline-primary mt-2">Lagre</button>
                     </div>
-                </div>
+                </form>
             }
         </div>
         <div class=" mt-4">
