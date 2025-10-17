@@ -23,7 +23,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-
+            _logger.LogError("[QuizRepository] GetAll: Error retrieving all quizzes from the database.");
             return null;
         }
     }
