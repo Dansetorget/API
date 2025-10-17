@@ -132,43 +132,93 @@ public class QuizController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Update(Quiz quiz)
+    public async Task<IActionResult> Update(CreateQuizViewModel model)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            return BadRequest();
+            return View(model);
         }
 
-        if (ModelState.IsValid)
+        // Load existing quiz with graph
+        var existingQuiz = await _quizRepository.GetQuizById(model.Id);
+        if (existingQuiz == null)
         {
-            // Update questions
-            foreach (var questionModel in quiz.Questions!)
-            {
-                var question = quiz.Questions!.FirstOrDefault(q => q.QuestionId == questionModel.QuestionId);
-                if (question != null)
-                {
-                    question.QuestionText = questionModel.QuestionText;
-                    question.Points = questionModel.Points;
+            return BadRequest("Quiz not found for the QuizId");
+        }
 
-                    // Update answers
-                    foreach (var answerModel in questionModel.Answers!)
-                    {
-                        var answer = question.Answers!.FirstOrDefault(a => a.AnswerId == answerModel.AnswerId);
-                        if (answer != null)
-                        {
-                            answer.AnswerText = answerModel.AnswerText;
-                            answer.IsCorrect = answerModel.IsCorrect;
-                        }
-                    }
+        // Update scalar fields
+        existingQuiz.Title = model.Title;
+        existingQuiz.Description = model.Description;
+
+        // Ensure collections
+        existingQuiz.Questions ??= new List<Question>();
+
+        var incomingQuestions = model.Questions ?? new List<QuestionViewModel>();
+
+        // Remove deleted questions
+        var incomingQuestionIds = incomingQuestions.Where(q => q.Id > 0).Select(q => q.Id).ToHashSet();
+        var questionsToRemove = existingQuiz.Questions.Where(q => !incomingQuestionIds.Contains(q.QuestionId)).ToList();
+        foreach (var qRemove in questionsToRemove)
+        {
+            existingQuiz.Questions.Remove(qRemove);
+        }
+
+        // Add or update questions
+        foreach (var qVm in incomingQuestions)
+        {
+            Question targetQuestion;
+            if (qVm.Id > 0)
+            {
+                targetQuestion = existingQuiz.Questions.FirstOrDefault(q => q.QuestionId == qVm.Id) ?? new Question();
+                if (targetQuestion.QuestionId == 0)
+                {
+                    existingQuiz.Questions.Add(targetQuestion);
                 }
             }
+            else
+            {
+                targetQuestion = new Question();
+                existingQuiz.Questions.Add(targetQuestion);
+            }
 
-            await _quizRepository.Update(quiz);
-            return RedirectToAction(nameof(Index));
+            targetQuestion.QuestionText = qVm.QuestionText;
+            targetQuestion.Points = qVm.Points;
 
+            // Sync answers
+            targetQuestion.Answers ??= new List<Answer>();
+            var incomingAnswers = qVm.Answers ?? new List<AnswerViewModel>();
+            var incomingAnswerIds = incomingAnswers.Where(a => a.Id > 0).Select(a => a.Id).ToHashSet();
+            var answersToRemove = targetQuestion.Answers.Where(a => !incomingAnswerIds.Contains(a.AnswerId)).ToList();
+            foreach (var aRemove in answersToRemove)
+            {
+                targetQuestion.Answers.Remove(aRemove);
+            }
+
+            foreach (var aVm in incomingAnswers)
+            {
+                Answer targetAnswer;
+                if (aVm.Id > 0)
+                {
+                    targetAnswer = targetQuestion.Answers.FirstOrDefault(a => a.AnswerId == aVm.Id) ?? new Answer();
+                    if (targetAnswer.AnswerId == 0)
+                    {
+                        targetQuestion.Answers.Add(targetAnswer);
+                    }
+                }
+                else
+                {
+                    targetAnswer = new Answer();
+                    targetQuestion.Answers.Add(targetAnswer);
+                }
+
+                targetAnswer.AnswerText = aVm.AnswerText;
+                targetAnswer.IsCorrect = aVm.IsCorrect;
+            }
         }
 
-        return View(quiz);
+        // Persist changes
+        await _quizRepository.Update(existingQuiz);
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
