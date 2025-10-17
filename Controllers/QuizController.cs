@@ -56,24 +56,29 @@ public class QuizController : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        return View(Questions);
+        // Changed this to match the POST, so they use the same model type
+        return View(new CreateQuizViewModel { Questions = Questions });
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(CreateQuizViewModel quizModel)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
+        {
+            return View(quizModel);
+        }
+        else
         {
             var quiz = new Quiz
             {
                 Title = quizModel.Title,
                 Description = quizModel.Description,
-                TotalQuestions = Questions.Count,
+                TotalQuestions = quizModel.Questions.Count,
                 Questions = new List<Question>()
             };
             // Add questions to the quiz
             // loop through the static Questions list
-            foreach (var questionModel in Questions)
+            foreach (var questionModel in quizModel.Questions)
             {
                 var question = new Question
                 {
@@ -132,20 +137,31 @@ public class QuizController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Update(Quiz quiz)
+    public async Task<IActionResult> Update(CreateQuizViewModel quizModel)
     {
-        if (ModelState.IsValid)
+        // Input validation
+        if (!ModelState.IsValid)
         {
-            return BadRequest();
+            // Return view with validation errors
+            return View(quizModel);
+        }
+        
+        // Fetch quiz from database, and check if quiz exists
+        var quiz = await _quizRepository.GetQuizById(quizModel.Id);
+        if (quiz == null)
+        {
+            return BadRequest("Quiz not found for the QuizId");
         }
 
-        if (ModelState.IsValid)
+        // Update title and description
+        quiz.Title = quizModel.Title;
+        quiz.Description = quizModel.Description;
+
+        // Update questions
+        foreach (var questionModel in quizModel.Questions)
         {
-            // Update questions
-            foreach (var questionModel in quiz.Questions!)
-            {
-                var question = quiz.Questions!.FirstOrDefault(q => q.QuestionId == questionModel.QuestionId);
-                if (question != null)
+            var question = quiz.Questions!.FirstOrDefault(q => q.QuestionId == questionModel.Id);
+            if (question != null)
                 {
                     question.QuestionText = questionModel.QuestionText;
                     question.Points = questionModel.Points;
@@ -153,7 +169,7 @@ public class QuizController : Controller
                     // Update answers
                     foreach (var answerModel in questionModel.Answers!)
                     {
-                        var answer = question.Answers!.FirstOrDefault(a => a.AnswerId == answerModel.AnswerId);
+                        var answer = question.Answers!.FirstOrDefault(a => a.AnswerId == answerModel.Id);
                         if (answer != null)
                         {
                             answer.AnswerText = answerModel.AnswerText;
@@ -164,11 +180,7 @@ public class QuizController : Controller
             }
 
             await _quizRepository.Update(quiz);
-            return RedirectToAction(nameof(Index));
-
-        }
-
-        return View(quiz);
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
