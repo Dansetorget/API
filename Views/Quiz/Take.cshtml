@@ -2,5 +2,45 @@
 @{
     ViewData["Title"] = "Take Quiz";
 }
-<h1>Take Quiz</h1>
+
+<div class="d-flex flex-column justify-content-center align-items-center">
+<h1 class="display-5 fw-bold mt-5">Quiz</h1>
+    <h2> @(Model?.Title ?? "Untitled quiz") </h2>
+     <p> @(string.IsNullOrWhiteSpace(Model?.Description) ? "Ingen beskrivelse" : Model!.Description) </p>
+
+
+    @if (Model?.Questions != null && Model.Questions.Any())
+    {
+        foreach (var question in Model.Questions)
+        {
+            <div class="container shadow card p-3 my-2 rounded">
+                <p class="fw-bold mb-4">@question.QuestionText</p>
+                @if (question.Answers != null && question.Answers.Any())
+                {
+                    <div class="row g-2">
+                    @foreach (var answer in question.Answers)
+                    {
+                        <div class="col-12 col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="answer-q@question.QuestionId" id="answer@(answer.AnswerId)">
+                                <label class="form-check-label" for="answer@(answer.AnswerId)">@answer.AnswerText</label>
+                            </div>
+                        </div>
+                    }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Ingen svaralternativer</p>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="container shadow card p-3 my-2 rounded">
+            <p class="text-muted mb-0">Ingen spørsmål tilgjengelig</p>
+        </div>
+    }
+    </div>
 
