@@ -52,6 +52,16 @@ public class QuizController : Controller
         return RedirectToAction("Create");
     }
 
+    public IActionResult DeleteQuestion(int id)
+    {
+        var question = Questions.FirstOrDefault(q => q.Id == id);
+        if (question != null)
+        {
+            Questions.Remove(question);
+        }
+        return RedirectToAction("Create");
+    }
+
 
     [HttpGet]
     public IActionResult Create()

@@ -30,7 +30,7 @@
                                 data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
                                 Endre
                             </button>
-                            <button class="btn btn-outline-danger w-fit">Slett</button>
+                            <a asp-controller="Quiz" asp-action="DeleteQuestion" asp-route-id="@q.Id" class="btn btn-outline-danger w-fit">Slett</a>
                         </div>
                     </div>
                     <div id="@collapseId" class="collapse mt-3">
