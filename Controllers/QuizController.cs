@@ -13,9 +13,6 @@ public class QuizController : Controller
 
     private readonly ILogger<QuizController> _logger;
 
-
-    private static List<QuestionViewModel> Questions = new List<QuestionViewModel>();
-
     public QuizController(IQuizRepository quizRepository, IQuestionRepository questionRepository, IAnswerRepository answerRepository, ILogger<QuizController> logger)
     {
         _quizRepository = quizRepository;
@@ -52,11 +49,12 @@ public class QuizController : Controller
     [HttpGet]
     public IActionResult Create()
     {
+        // Initialize with empty question list
         var model = new CreateQuizViewModel
         {
             Title = string.Empty,
             Description = string.Empty,
-            Questions = Questions // behold eksisterende midlertidige spørsmål om de finnes
+            Questions = new List<QuestionViewModel>()
         };
         return View(model);
     }
@@ -65,17 +63,20 @@ public class QuizController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Submit(SubmitQuizViewModel model)
     {
+        // Validate the model
         if (model == null || model.QuizId <= 0)
         {
             return BadRequest("Invalid submission");
         }
 
+        // Get the quiz from the database
         var quiz = await _quizRepository.GetQuizById(model.QuizId);
         if (quiz == null || quiz.Questions == null)
         {
             return NotFound();
         }
 
+        // Evaluate the quiz
         var result = new ResultViewModel
         {
             QuizId = quiz.QuizId,
@@ -85,6 +86,7 @@ public class QuizController : Controller
             MaxScore = quiz.Questions.Sum(q => q.Points)
         };
 
+        // Evaluate each question
         foreach (var q in quiz.Questions)
         {
             var response = model.Responses?.FirstOrDefault(r => r.QuestionId == q.QuestionId);
@@ -99,6 +101,7 @@ public class QuizController : Controller
                 result.TotalScore += q.Points;
             }
 
+            // Prepare question result details
             result.QuestionResults.Add(new QuestionResultViewModel
             {
                 QuestionId = q.QuestionId,
@@ -121,6 +124,7 @@ public class QuizController : Controller
             return View(quizModel);
         }
 
+        // Map ViewModel to Entity
         var questionsVm = quizModel.Questions ?? new List<QuestionViewModel>();
         var quiz = new Quiz
         {
@@ -130,6 +134,7 @@ public class QuizController : Controller
             Questions = new List<Question>()
         };
 
+        // Map questions and answers
         foreach (var questionModel in questionsVm)
         {
             var question = new Question
@@ -148,26 +153,26 @@ public class QuizController : Controller
                 });
             }
 
+            // Add question to quiz
             quiz.Questions.Add(question);
         }
 
         await _quizRepository.Create(quiz);
-        // Tøm den midlertidige listen siden vi nå har lagret
-        // Questions.Clear();
         return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]
     public async Task<IActionResult> Update(int id)
     {
+        // Fetch quiz from database, and check if quiz exists
         var quiz = await _quizRepository.GetQuizById(id);
-
         if (quiz == null)
         {
             _logger.LogError("[QuizController] Update: Quiz not found when updating the QuizId {QuizId:0000}", id);
             return BadRequest("Quiz not found for the QuizId");
         }
 
+        // Map to ViewModel
         var model = new CreateQuizViewModel
         {
             Id = quiz.QuizId,
@@ -294,6 +299,7 @@ public class QuizController : Controller
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
+        // Fetch quiz from database, and check if quiz exists
         var quiz = await _quizRepository.GetQuizById(id);
         if (quiz == null)
         {
@@ -307,6 +313,7 @@ public class QuizController : Controller
     [HttpPost]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        // Attempt to delete the quiz
         var returnOK = await _quizRepository.Delete(id);
         if (!returnOK)
         {
