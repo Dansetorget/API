@@ -254,15 +254,15 @@ public class QuizController : Controller
         }
         
         // Fetch quiz from database, and check if quiz exists
-        var quiz = await _quizRepository.GetQuizById(quizModel.Id);
+        var quiz = await _quizRepository.GetQuizById(model.Id);
         if (quiz == null)
         {
             return BadRequest("Quiz not found for the QuizId");
         }
 
         // Update title and description
-        quiz.Title = quizModel.Title;
-        quiz.Description = quizModel.Description;
+        quiz.Title = model.Title;
+        quiz.Description = model.Description;
 
         // Add or update questions
         foreach (var qVm in incomingQuestions)
