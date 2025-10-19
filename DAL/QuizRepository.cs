@@ -31,6 +31,7 @@ public class QuizRepository : IQuizRepository
     {
         try
         {
+            // Include questions and answers
             return await _db.Quizzes
                 .Include(q => q.Questions!)
                 .ThenInclude(q => q.Answers)

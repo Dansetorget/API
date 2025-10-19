@@ -9,6 +9,7 @@
     </div>
 
     <form asp-action="Create" method="post">
+        <!-- The anti-forgery token is used to prevent cross-site request forgery. -->
         @Html.AntiForgeryToken()
 
         <div class="card mb-4">
@@ -100,7 +101,10 @@
     </form>
 </div>
 
+<!-- A script-section for adding questions.  The template is used to add a new question to the list. -->
+
 @section Scripts {
+    <!-- The validation scripts are used to validate the form. -->
     <partial name="_ValidationScriptsPartial" />
     <template id="question-template">
         <div class="container shadow card p-3 my-2 rounded question-item" data-index="__INDEX__">
@@ -179,17 +183,23 @@
         </div>
     </template>
     <script>
+        // The script-section for adding questions.  The template is used to add a new question to the list.
         (function() {
+            // The container is the div that contains the questions.
+            // The add button is the button that adds a new question to the list.
+            // The template is the template that is used to add a new question to the list.
             const container = document.getElementById('questions-container');
             const addBtn = document.getElementById('add-question-btn');
             const tpl = document.getElementById('question-template');
             if (!container || !addBtn || !tpl) return;
 
+            // The function getNextIndex() is used to get the next index for the new question.
             function getNextIndex() {
                 const items = container.querySelectorAll('.question-item');
                 return items.length;
             }
 
+            // The add button is clicked, the new question is added to the list.
             addBtn.addEventListener('click', function() {
                 const index = getNextIndex();
                 const html = tpl.innerHTML
