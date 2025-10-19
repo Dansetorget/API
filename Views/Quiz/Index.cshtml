@@ -17,8 +17,7 @@
             No quizzes available
         </div>
     }
-    else
-    {
+    else {
         <div class="row g-4">
             @foreach (var quiz in Model)
             {
@@ -35,10 +34,14 @@
                                 <a asp-controller="Quiz" asp-action="Take" asp-route-id="@quiz.QuizId" class="btn btn-outline-primary">
                                     Take Quiz 🐾
                                 </a>
+                                <form asp-action="DeleteConfirmed" asp-controller="Quiz" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@quiz.QuizId" />
+                                    <button type="submit" class="btn btn-outline-danger w-fit">Slett</button>
+                                </form>
                             </div>
-                        </div>
                     </div>
                 </div>
+            </div>
             }
         </div>
     }
