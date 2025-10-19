@@ -4,13 +4,16 @@
     ViewData["Title"] = "Quizes";
 }
 
+<!-- Display quizzes -->
 <div class="container-fluid py-5 px-3 px-md-5">
+    <!-- The title and description of the quizzes are displayed. -->
     <div class="text-center mb-5 pb-2">
         <img src="~/images/bear.png" alt="Quiz Bear" class="img-fluid d-block mx-auto mb-2" style="max-height:80px;">
         <h2 class="mb-1 display-5 fw-bold">Quizes</h2>
         <small class="text-muted">Test your knowledge and have fun</small>
     </div>
 
+    <!-- If there are no quizzes, a message is displayed. If there are quizzes, they are displayed. -->
     @if (Model == null || !Model.Any())
     {
         <div class="alert alert-info" role="alert">

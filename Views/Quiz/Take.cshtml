@@ -3,12 +3,14 @@
     ViewData["Title"] = "Take Quiz";
 }
 
+<!-- Take quiz -->
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Ta quiz</h2>
         <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-secondary">Tilbake</a>
     </div>
 
+    <!-- The quiz title and description are displayed. -->
     <div class="card mb-4">
         <div class="card-body">
             <h4 class="mb-1">@(Model?.Title ?? "Untitled quiz")</h4>
@@ -16,6 +18,7 @@
         </div>
     </div>
 
+    <!-- The form is used to submit the quiz. It will be submitted to the Submit action. -->
     <form asp-controller="Quiz" asp-action="Submit" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" name="QuizId" value="@Model!.QuizId" />
