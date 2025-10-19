@@ -9,6 +9,7 @@
         <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-secondary">Tilbake</a>
     </div>
 
+    <!-- The quiz title and results are displayed in a card. -->
     <div class="card mb-4">
         <div class="card-body">
             <h4 class="mb-1">@Model.QuizTitle</h4>
@@ -17,6 +18,7 @@
         </div>
     </div>
 
+    <!-- The question results are displayed in a card. -->
     @if (Model.QuestionResults != null && Model.QuestionResults.Any())
     {
         foreach (var qr in Model.QuestionResults)
@@ -31,6 +33,7 @@
                 <div class="row mt-2">
                     <div class="col-12 col-md-6">
                         <p class="mb-1"><strong>Dine svar</strong></p>
+                        <!-- The selected answers are displayed in a list. -->
                         @if (qr.SelectedAnswers.Any())
                         {
                             <ul class="mb-0">
@@ -47,6 +50,7 @@
                     </div>
                     <div class="col-12 col-md-6">
                         <p class="mb-1"><strong>Fasitsvar</strong></p>
+                        <!-- The correct answers are displayed in a list. -->
                         @if (qr.CorrectAnswers.Any())
                         {
                             <ul class="mb-0">
@@ -65,6 +69,7 @@
             </div>
         }
     }
+    // If there are no question results, a message is displayed.
     else
     {
         <div class="alert alert-info">Ingen resultater å vise.</div>
