@@ -1,0 +1,51 @@
+@model IEnumerable<QuizApp.Models.Quiz>
+
+@{
+    ViewData["Title"] = "Quizes";
+}
+
+<!-- Display quizzes -->
+<div class="container-fluid py-5 px-3 px-md-5">
+    <!-- The title and description of the quizzes are displayed. -->
+    <div class="text-center mb-5 pb-2">
+        <img src="~/images/bear.png" alt="Quiz Bear" class="img-fluid d-block mx-auto mb-2" style="max-height:80px;">
+        <h2 class="mb-1 display-5 fw-bold">Quizes</h2>
+        <small class="text-muted">Test your knowledge and have fun</small>
+    </div>
+
+    <!-- If there are no quizzes, a message is displayed. If there are quizzes, they are displayed. -->
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            No quizzes available
+        </div>
+    }
+    else {
+        <div class="row g-4">
+            @foreach (var quiz in Model)
+            {
+                <div class="col-12 col-md-6">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title mb-1">@quiz.Title</h5>
+                            <small class="text-muted mb-3">@quiz.TotalQuestions @(quiz.TotalQuestions == 1 ? "spørsmål" : "spørsmål")</small>
+                            <p class="card-text flex-grow-1">@(!string.IsNullOrWhiteSpace(quiz.Description) ? quiz.Description : "Ingen beskrivelse")</p>
+                            <div class="mt-3 d-flex justify-content-end gap-2">
+                                <a asp-controller="Quiz" asp-action="Update" asp-route-id="@quiz.QuizId" class="btn btn-secondary">
+                                    Edit
+                                </a>
+                                <a asp-controller="Quiz" asp-action="Take" asp-route-id="@quiz.QuizId" class="btn btn-outline-primary">
+                                    Take Quiz 🐾
+                                </a>
+                                <form asp-action="DeleteConfirmed" asp-controller="Quiz" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@quiz.QuizId" />
+                                    <button type="submit" class="btn btn-outline-danger w-fit">Slett</button>
+                                </form>
+                            </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    }
+</div>

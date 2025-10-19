@@ -1,0 +1,216 @@
+@model CreateQuizViewModel
+
+@{
+    ViewData["Title"] = "Edit Quiz";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Edit quiz</h2>
+        <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+    <!-- The form is used to update the quiz. It will be submitted to the Update action. -->
+    <form asp-action="Update" method="post">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Questions</strong>
+            </div>
+            <div class="card-body" id="questions-container">
+                <!-- The questions are displayed in a card. -->
+                @if (Model.Questions != null && Model.Questions.Any())
+                {
+                    @for (var i = 0; i < Model.Questions.Count; i++)
+                    {
+                        <div class="container shadow card p-3 my-2 rounded question-item" data-index="@i">
+                            <h5 class="mb-3">Question @(i + 1)</h5>
+                            <input type="hidden" asp-for="Questions[@i].Id" />
+
+                            <div class="row g-3 align-items-end">
+                                <div class="col-12 col-md-9">
+                                    <label asp-for="Questions[@i].QuestionText" class="form-label">Question</label>
+                                    <input asp-for="Questions[@i].QuestionText" class="form-control" />
+                                    <span asp-validation-for="Questions[@i].QuestionText" class="text-danger"></span>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label asp-for="Questions[@i].Points" class="form-label">Points</label>
+                                    <input asp-for="Questions[@i].Points" class="form-control" type="number" />
+                                    <span asp-validation-for="Questions[@i].Points" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            @if (Model.Questions[@i].Answers != null && Model.Questions[@i].Answers.Any())
+                            {
+                                <div class="mt-3">
+                                    <div class="row g-3">
+                                        @for (var j = 0; j < Model.Questions[@i].Answers.Count; j++)
+                                        {
+                                            <div class="col-12 col-md-6">
+                                                <div class="border rounded p-2 h-100">
+                                                    <input type="hidden" asp-for="Questions[@i].Answers[@j].Id" />
+                                                    <div class="mb-2">
+                                                        <label asp-for="Questions[@i].Answers[@j].AnswerText" class="form-label">Answer</label>
+                                                        <input asp-for="Questions[@i].Answers[@j].AnswerText" class="form-control" />
+                                                        <span asp-validation-for="Questions[@i].Answers[@j].AnswerText" class="text-danger"></span>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" asp-for="Questions[@i].Answers[@j].IsCorrect" />
+                                                        <label class="form-check-label" asp-for="Questions[@i].Answers[@j].IsCorrect">Correct</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted mt-3 mb-0">No answers for this question.</p>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-info mb-0">No questions found.</div>
+                }
+            </div>
+            <div class="card-footer bg-white">
+                <button type="button" id="add-question-btn" class="btn btn-primary">Add question</button>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+    </form>
+</div>
+
+<!-- The validation scripts are used to validate the form. -->
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <!-- The template is used to add a new question to the list. -->
+    <template id="question-template">
+        <div class="container shadow card p-3 my-2 rounded question-item" data-index="__INDEX__">
+            <h5 class="mb-3">Question __NUMBER__</h5>
+            <input type="hidden" name="Questions[__INDEX__].Id" value="0" />
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-9">
+                    <label class="form-label" for="Questions___INDEX__--QuestionText">Question</label>
+                    <input class="form-control" id="Questions___INDEX__--QuestionText" name="Questions[__INDEX__].QuestionText" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label" for="Questions___INDEX__--Points">Points</label>
+                    <input class="form-control" type="number" id="Questions___INDEX__--Points" name="Questions[__INDEX__].Points" value="0" />
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="border rounded p-2 h-100">
+                            <input type="hidden" name="Questions[__INDEX__].Answers[0].Id" value="0" />
+                            <div class="mb-2">
+                                <label class="form-label" for="Questions___INDEX__--Answers__0__AnswerText">Answer</label>
+                                <input class="form-control" id="Questions___INDEX__--Answers__0__AnswerText" name="Questions[__INDEX__].Answers[0].AnswerText" />
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="Questions___INDEX__--Answers__0__IsCorrect" name="Questions[__INDEX__].Answers[0].IsCorrect" value="true" />
+                                <input type="hidden" name="Questions[__INDEX__].Answers[0].IsCorrect" value="false" />
+                                <label class="form-check-label" for="Questions___INDEX__--Answers__0__IsCorrect">Correct</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="border rounded p-2 h-100">
+                            <input type="hidden" name="Questions[__INDEX__].Answers[1].Id" value="0" />
+                            <div class="mb-2">
+                                <label class="form-label" for="Questions___INDEX__--Answers__1__AnswerText">Answer</label>
+                                <input class="form-control" id="Questions___INDEX__--Answers__1__AnswerText" name="Questions[__INDEX__].Answers[1].AnswerText" />
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="Questions___INDEX__--Answers__1__IsCorrect" name="Questions[__INDEX__].Answers[1].IsCorrect" value="true" />
+                                <input type="hidden" name="Questions[__INDEX__].Answers[1].IsCorrect" value="false" />
+                                <label class="form-check-label" for="Questions___INDEX__--Answers__1__IsCorrect">Correct</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="border rounded p-2 h-100">
+                            <input type="hidden" name="Questions[__INDEX__].Answers[2].Id" value="0" />
+                            <div class="mb-2">
+                                <label class="form-label" for="Questions___INDEX__--Answers__2__AnswerText">Answer</label>
+                                <input class="form-control" id="Questions___INDEX__--Answers__2__AnswerText" name="Questions[__INDEX__].Answers[2].AnswerText" />
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="Questions___INDEX__--Answers__2__IsCorrect" name="Questions[__INDEX__].Answers[2].IsCorrect" value="true" />
+                                <input type="hidden" name="Questions[__INDEX__].Answers[2].IsCorrect" value="false" />
+                                <label class="form-check-label" for="Questions___INDEX__--Answers__2__IsCorrect">Correct</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="border rounded p-2 h-100">
+                            <input type="hidden" name="Questions[__INDEX__].Answers[3].Id" value="0" />
+                            <div class="mb-2">
+                                <label class="form-label" for="Questions___INDEX__--Answers__3__AnswerText">Answer</label>
+                                <input class="form-control" id="Questions___INDEX__--Answers__3__AnswerText" name="Questions[__INDEX__].Answers[3].AnswerText" />
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="Questions___INDEX__--Answers__3__IsCorrect" name="Questions[__INDEX__].Answers[3].IsCorrect" value="true" />
+                                <input type="hidden" name="Questions[__INDEX__].Answers[3].IsCorrect" value="false" />
+                                <label class="form-check-label" for="Questions___INDEX__--Answers__3__IsCorrect">Correct</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        // The script-section for adding questions.  The template is used to add a new question to the list.
+        (function() {
+            // The container is the div that contains the questions.
+            // The add button is the button that adds a new question to the list.
+            // The template is the template that is used to add a new question to the list.
+            const container = document.getElementById('questions-container');
+            const addBtn = document.getElementById('add-question-btn');
+            const tpl = document.getElementById('question-template');
+            if (!container || !addBtn || !tpl) return;
+
+            // The function getNextIndex() is used to get the next index for the new question.
+            function getNextIndex() {
+                const items = container.querySelectorAll('.question-item');
+                return items.length;
+            }
+
+            // The add button is clicked, the new question is added to the list.
+            addBtn.addEventListener('click', function() {
+                const index = getNextIndex();
+                const html = tpl.innerHTML
+                    .replaceAll('__INDEX__', index)
+                    .replaceAll('__NUMBER__', index + 1);
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = html.trim();
+                container.appendChild(wrapper.firstChild);
+            });
+        })();
+    </script>
+}
+

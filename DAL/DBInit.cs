@@ -19,6 +19,7 @@ public static class DBInit
             {
                 Title = "C# Fundamentals",
                 Description = "Test your knowledge of C# basics",
+                TotalQuestions = 2,
                 Questions = new List<Question>
                 {
                     new Question
@@ -49,6 +50,7 @@ public static class DBInit
             {
                 Title = "ASP.NET MVC Basics",
                 Description = "Questions about ASP.NET MVC framework",
+                TotalQuestions = 1,
                 Questions = new List<Question>
                 {
                     new Question

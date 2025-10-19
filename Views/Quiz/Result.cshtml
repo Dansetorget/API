@@ -1,0 +1,79 @@
+@model QuizApp.Models.ResultViewModel
+@{
+    ViewData["Title"] = "Quiz Result";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Resultat</h2>
+        <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-secondary">Tilbake</a>
+    </div>
+
+    <!-- The quiz title and results are displayed in a card. -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="mb-1">@Model.QuizTitle</h4>
+            <small class="text-muted">Spørsmål riktig: @Model.QuestionsCorrect / @Model.TotalQuestions</small><br />
+            <small class="text-muted">Poeng: @Model.TotalScore / @Model.MaxScore</small>
+        </div>
+    </div>
+
+    <!-- The question results are displayed in a card. -->
+    @if (Model.QuestionResults != null && Model.QuestionResults.Any())
+    {
+        foreach (var qr in Model.QuestionResults)
+        {
+            <div class="container shadow card p-3 my-2 rounded">
+                <div class="d-flex justify-content-between align-items-start">
+                    <p class="fw-bold mb-2">@qr.QuestionText</p>
+                    <span class="badge @(qr.IsCorrect ? "bg-success" : "bg-danger")">@(qr.IsCorrect ? "Riktig" : "Feil")</span>
+                </div>
+                <small class="text-muted">Poeng: @qr.Points</small>
+
+                <div class="row mt-2">
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1"><strong>Dine svar</strong></p>
+                        <!-- The selected answers are displayed in a list. -->
+                        @if (qr.SelectedAnswers.Any())
+                        {
+                            <ul class="mb-0">
+                                @foreach (var sa in qr.SelectedAnswers)
+                                {
+                                    <li>@sa</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">Ingen svar valgt</p>
+                        }
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <p class="mb-1"><strong>Fasitsvar</strong></p>
+                        <!-- The correct answers are displayed in a list. -->
+                        @if (qr.CorrectAnswers.Any())
+                        {
+                            <ul class="mb-0">
+                                @foreach (var ca in qr.CorrectAnswers)
+                                {
+                                    <li>@ca</li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">Ingen fasit registrert</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    // If there are no question results, a message is displayed.
+    else
+    {
+        <div class="alert alert-info">Ingen resultater å vise.</div>
+    }
+</div>
+
+

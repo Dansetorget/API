@@ -6,3 +6,5 @@
 **/build
 **/Logs
 **/APILogs
+QuizDatabase.db-wal
+QuizDatabase.db-shm

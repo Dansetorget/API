@@ -1,0 +1,70 @@
+@model QuizApp.Models.Quiz
+@{
+    ViewData["Title"] = "Take Quiz";
+}
+
+<!-- Take quiz -->
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Ta quiz</h2>
+        <a asp-controller="Quiz" asp-action="Index" class="btn btn-outline-secondary">Tilbake</a>
+    </div>
+
+    <!-- The quiz title and description are displayed. -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="mb-1">@(Model?.Title ?? "Untitled quiz")</h4>
+            <small class="text-muted">@(string.IsNullOrWhiteSpace(Model?.Description ?? string.Empty) ? "Ingen beskrivelse" : (Model?.Description ?? string.Empty))</small>
+        </div>
+    </div>
+
+    <!-- The form is used to submit the quiz. It will be submitted to the Submit action. -->
+    <form asp-controller="Quiz" asp-action="Submit" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="QuizId" value="@Model!.QuizId" />
+
+        @if (Model?.Questions != null && Model.Questions.Any())
+        {
+            var i = 0;
+            foreach (var question in Model.Questions)
+            {
+                <div class="container shadow card p-3 my-2 rounded">
+                    <p class="fw-bold mb-3">@question.QuestionText</p>
+
+                    <input type="hidden" name="Responses[@i].QuestionId" value="@question.QuestionId" />
+
+                    @if (question.Answers != null && question.Answers.Any())
+                    {
+                        <div class="row g-2">
+                        @foreach (var answer in question.Answers)
+                        {
+                            var checkboxId = $"q{question.QuestionId}-a{answer.AnswerId}";
+                            <div class="col-12 col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="@checkboxId" name="Responses[@i].SelectedAnswerIds" value="@answer.AnswerId" />
+                                    <label class="form-check-label" for="@checkboxId">@answer.AnswerText</label>
+                                </div>
+                            </div>
+                        }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Ingen svaralternativer</p>
+                    }
+                </div>
+                i++;
+            }
+        }
+        else
+        {
+            <div class="container shadow card p-3 my-2 rounded">
+                <p class="text-muted mb-0">Ingen spørsmål tilgjengelig</p>
+            </div>
+        }
+
+        <div class="d-flex justify-content-end mt-3">
+            <button type="submit" class="btn btn-primary">Send inn</button>
+        </div>
+    </form>
+</div>
