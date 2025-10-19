@@ -82,46 +82,57 @@ public class QuizController : Controller
     [HttpGet]
     public IActionResult Create()
     {
-        return View(Questions);
+        var model = new CreateQuizViewModel
+        {
+            Title = string.Empty,
+            Description = string.Empty,
+            Questions = Questions // behold eksisterende midlertidige spørsmål om de finnes
+        };
+        return View(model);
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateQuizViewModel quizModel)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            var quiz = new Quiz
+            return View(quizModel);
+        }
+
+        var questionsVm = quizModel.Questions ?? new List<QuestionViewModel>();
+        var quiz = new Quiz
+        {
+            Title = quizModel.Title,
+            Description = quizModel.Description,
+            TotalQuestions = questionsVm.Count,
+            Questions = new List<Question>()
+        };
+
+        foreach (var questionModel in questionsVm)
+        {
+            var question = new Question
             {
-                Title = quizModel.Title,
-                Description = quizModel.Description,
-                TotalQuestions = Questions.Count,
-                Questions = new List<Question>()
+                QuestionText = questionModel.QuestionText,
+                Points = questionModel.Points,
+                Answers = new List<Answer>()
             };
-            // Add questions to the quiz
-            // loop through the static Questions list
-            foreach (var questionModel in Questions)
+
+            foreach (var answerModel in (questionModel.Answers ?? new List<AnswerViewModel>()))
             {
-                var question = new Question
+                question.Answers.Add(new Answer
                 {
-                    QuestionText = questionModel.QuestionText,
-                    Answers = new List<Answer>()
-                };
-                // Add answers to the question
-                foreach (var answerModel in questionModel.Answers!)
-                {
-                    question.Answers.Add(new Answer
-                    {
-                        AnswerText = answerModel.AnswerText,
-                        IsCorrect = answerModel.IsCorrect
-                    });
-                }
-                quiz.Questions.Add(question);
-                //await _quizRepository.AddQuestionToQuiz(quiz, question);
+                    AnswerText = answerModel.AnswerText,
+                    IsCorrect = answerModel.IsCorrect
+                });
             }
 
-            await _quizRepository.Create(quiz);
-
+            quiz.Questions.Add(question);
         }
+
+        await _quizRepository.Create(quiz);
+        // Tøm den midlertidige listen siden vi nå har lagret
+        Questions.Clear();
         return RedirectToAction(nameof(Index));
     }
 
