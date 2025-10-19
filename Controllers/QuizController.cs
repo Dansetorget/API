@@ -8,16 +8,11 @@ namespace QuizApp.Controllers;
 public class QuizController : Controller
 {
     private readonly IQuizRepository _quizRepository;
-    private readonly IQuestionRepository _questionRepository;
-    private readonly IAnswerRepository _answerRepository;
-
     private readonly ILogger<QuizController> _logger;
 
-    public QuizController(IQuizRepository quizRepository, IQuestionRepository questionRepository, IAnswerRepository answerRepository, ILogger<QuizController> logger)
+    public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger)
     {
         _quizRepository = quizRepository;
-        _questionRepository = questionRepository;
-        _answerRepository = answerRepository;
         _logger = logger;
     }
     public async Task<IActionResult> Index()
@@ -44,20 +39,6 @@ public class QuizController : Controller
             return NotFound();
         }
         return View(quiz);
-    }
-
-
-    [HttpGet]
-    public IActionResult Create()
-    {
-        // Initialize with empty question list
-        var model = new CreateQuizViewModel
-        {
-            Title = string.Empty,
-            Description = string.Empty,
-            Questions = new List<QuestionViewModel>()
-        };
-        return View(model);
     }
 
     [HttpPost]
@@ -117,7 +98,22 @@ public class QuizController : Controller
         return View("Result", result);
     }
 
+    [HttpGet]
+    public IActionResult Create()
+    {
+        // Initialize with empty question list
+        var model = new CreateQuizViewModel
+        {
+            Title = string.Empty,
+            Description = string.Empty,
+            Questions = new List<QuestionViewModel>()
+        };
+        return View(model);
+    }
+
+
     [ValidateAntiForgeryToken]
+    [HttpPost]
     public async Task<IActionResult> Create(CreateQuizViewModel quizModel)
     {
         if (!ModelState.IsValid)

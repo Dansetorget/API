@@ -18,8 +18,7 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
 
 // Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
-builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
-builder.Services.AddScoped<IAnswerRepository, AnswerRepository>();
+
 
 var loggerConfiguration = new LoggerConfiguration()
     .MinimumLevel.Information()
