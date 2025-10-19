@@ -48,38 +48,6 @@ public class QuizController : Controller
         return View(quiz);
     }
 
-    public IActionResult AddQuestionToList(QuestionViewModel question)
-    {
-        Questions.Add(question);
-        return RedirectToAction("Create");
-    }
-
-    public IActionResult DeleteQuestionFromList(int id)
-    {
-        var question = Questions.FirstOrDefault(q => q.Id == id);
-        if (question != null)
-        {
-            Questions.Remove(question);
-        }
-        return RedirectToAction("Create");
-    }
-
-    public IActionResult UpdateQuestionInList(QuestionViewModel question)
-    {
-        var questionToUpdate = Questions[question.Id];
-        if (questionToUpdate != null)
-        {
-            questionToUpdate.QuestionText = question.QuestionText;
-            Console.WriteLine(question.Answers.Count+"-------");
-            for (var i = 0; i < question.Answers.Count; i++)
-            {
-                questionToUpdate.Answers[i].AnswerText = question.Answers[i].AnswerText;
-                questionToUpdate.Answers[i].IsCorrect = question.Answers[i].IsCorrect;
-            }
-        }
-        return RedirectToAction("Create");
-    }
-
 
     [HttpGet]
     public IActionResult Create()
@@ -144,6 +112,7 @@ public class QuizController : Controller
 
         return View("Result", result);
     }
+
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateQuizViewModel quizModel)
     {
@@ -170,7 +139,7 @@ public class QuizController : Controller
                 Answers = new List<Answer>()
             };
 
-            foreach (var answerModel in (questionModel.Answers ?? new List<AnswerViewModel>()))
+            foreach (var answerModel in questionModel.Answers ?? new List<AnswerViewModel>())
             {
                 question.Answers.Add(new Answer
                 {
@@ -184,7 +153,7 @@ public class QuizController : Controller
 
         await _quizRepository.Create(quiz);
         // Tøm den midlertidige listen siden vi nå har lagret
-        Questions.Clear();
+        // Questions.Clear();
         return RedirectToAction(nameof(Index));
     }
 
@@ -252,7 +221,7 @@ public class QuizController : Controller
         {
             existingQuiz.Questions.Remove(qRemove);
         }
-        
+
         // Fetch quiz from database, and check if quiz exists
         var quiz = await _quizRepository.GetQuizById(model.Id);
         if (quiz == null)
