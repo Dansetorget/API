@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using QuizApp.DAL;
 using QuizApp.Models;
 
@@ -13,27 +11,30 @@ public class QuizController : Controller
     private readonly IQuestionRepository _questionRepository;
     private readonly IAnswerRepository _answerRepository;
 
+    private readonly ILogger<QuizController> _logger;
+
 
     private static List<QuestionViewModel> Questions = new List<QuestionViewModel>();
 
-    public QuizController(IQuizRepository quizRepository, IQuestionRepository questionRepository, IAnswerRepository answerRepository)
+    public QuizController(IQuizRepository quizRepository, IQuestionRepository questionRepository, IAnswerRepository answerRepository, ILogger<QuizController> logger)
     {
         _quizRepository = quizRepository;
         _questionRepository = questionRepository;
         _answerRepository = answerRepository;
+        _logger = logger;
     }
     public async Task<IActionResult> Index()
     {
-        var allQuizzes = await _quizRepository.GetAll();
-        var quizzes = allQuizzes?.ToList() ?? new List<Quiz>();
+        var quizzes = await _quizRepository.GetAll();
 
         // if no quizzes - show a message
-        if (quizzes.Count == 0)
+        if (quizzes == null)
         {
+            _logger.LogError("[QuizController] Index: No quizzes found in the database.");
             return View("NoQuizzes");
         }
         return View(quizzes);
-    }   
+    }
 
     [HttpGet]
     public async Task<IActionResult> Take(int id) // takes the quiz id and gets the quiz from the database
@@ -41,6 +42,7 @@ public class QuizController : Controller
         var quiz = await _quizRepository.GetQuizById(id);
         if (quiz == null)
         {
+            _logger.LogError("[QuizController] Take: Quiz not found for the QuizId {QuizId}", id);
             return NotFound();
         }
         return View(quiz);
@@ -98,10 +100,14 @@ public class QuizController : Controller
                 //await _quizRepository.AddQuestionToQuiz(quiz, question);
             }
 
-            await _quizRepository.Create(quiz);
-
+            bool returnOK = await _quizRepository.Create(quiz);
+            if (returnOK)
+            {
+                return RedirectToAction(nameof(Index));
+            }
         }
-        return RedirectToAction(nameof(Index));
+        _logger.LogError("[QuizController] Create: Quiz creation failed {@quiz}", quizModel);
+        return View(quizModel);
     }
 
     [HttpGet]
@@ -111,6 +117,7 @@ public class QuizController : Controller
 
         if (quiz == null)
         {
+            _logger.LogError("[QuizController] Update: Quiz not found when updating the QuizId {QuizId:0000}", id);
             return BadRequest("Quiz not found for the QuizId");
         }
 
@@ -179,8 +186,15 @@ public class QuizController : Controller
                 }
             }
 
-            await _quizRepository.Update(quiz);
-        return RedirectToAction(nameof(Index));
+            bool returnOK = await _quizRepository.Update(quiz);
+            if (returnOK)
+                return RedirectToAction(nameof(Index));
+
+
+        }
+        _logger.LogWarning("[QuizController] Update: Quiz update failed {@quiz}", quiz);
+        return View(quiz);
+
     }
 
     [HttpGet]
@@ -189,7 +203,7 @@ public class QuizController : Controller
         var quiz = await _quizRepository.GetQuizById(id);
         if (quiz == null)
         {
-            // Log the error (not implemented here)
+            _logger.LogError("[QuizController] Delete: Quiz not found when deleting the QuizId {QuizId:0000}", id);
             return BadRequest("Quiz not found for the QuizId");
         }
 
@@ -202,7 +216,7 @@ public class QuizController : Controller
         var returnOK = await _quizRepository.Delete(id);
         if (!returnOK)
         {
-            // log the error (not implemented here)
+            _logger.LogError("[QuizController] DeleteConfirmed: Quiz deletion failed for the QuizId {QuizId:0000}", id);
             return BadRequest("Quiz deletion failed");
         }
         return RedirectToAction(nameof(Index));
