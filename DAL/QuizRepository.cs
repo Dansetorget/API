@@ -7,10 +7,12 @@ namespace QuizApp.DAL;
 public class QuizRepository : IQuizRepository
 {
     private readonly QuizDbContext _db;
+    private readonly ILogger<QuizRepository> _logger;
 
-    public QuizRepository(QuizDbContext db)
+    public QuizRepository(QuizDbContext db, ILogger<QuizRepository> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Quiz>?> GetAll()
@@ -21,7 +23,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            // Log the exception (not implemented here)
+            _logger.LogError("[QuizRepository] GetAll: Error retrieving all quizzes from the database.");
             return null;
         }
     }
@@ -29,11 +31,14 @@ public class QuizRepository : IQuizRepository
     {
         try
         {
-            return await _db.Quizzes.FindAsync(id);
+            return await _db.Quizzes
+                .Include(q => q.Questions!)
+                .ThenInclude(q => q.Answers)
+                .FirstOrDefaultAsync(q => q.QuizId == id);
         }
         catch (Exception)
         {
-            // Log the exception (not implemented here)
+            _logger.LogError("[QuizRepository] GetQuizById: Error retrieving quiz with ID {QuizId:0000}", id);
             return null;
         }
     }
@@ -47,7 +52,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            // Log the exception (not implemented here)
+            _logger.LogError("[QuizRepository] Create: Error creating a new quiz.");
             return false;
         }
     }
@@ -67,7 +72,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            // Log the exception (not implemented here)
+            _logger.LogError("[QuizRepository] AddQuestionToQuiz: Error adding question to quiz with ID {QuizId:0000}", quiz.QuizId);
             return false;
         }
     }
@@ -83,7 +88,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            // Log the exception (not implemented here)
+            _logger.LogError("[QuizRepository] Update: Error updating quiz with ID {QuizId:0000}", quiz.QuizId);
             return false;
         }
     }
@@ -91,7 +96,7 @@ public class QuizRepository : IQuizRepository
     {
         try
         {
-            var quiz = await _db.Quizzes.FindAsync(id);
+            var quiz = await GetQuizById(id);
             if (quiz == null)
             {
                 return false;
@@ -103,7 +108,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            // Log the exception (not implemented here)
+            _logger.LogError("[QuizRepository] Delete: Error deleting quiz with ID {QuizId:0000}", id);
             return false;
         }
     }
