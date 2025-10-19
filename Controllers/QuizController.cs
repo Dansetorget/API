@@ -93,6 +93,56 @@ public class QuizController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Submit(SubmitQuizViewModel model)
+    {
+        if (model == null || model.QuizId <= 0)
+        {
+            return BadRequest("Invalid submission");
+        }
+
+        var quiz = await _quizRepository.GetQuizById(model.QuizId);
+        if (quiz == null || quiz.Questions == null)
+        {
+            return NotFound();
+        }
+
+        var result = new ResultViewModel
+        {
+            QuizId = quiz.QuizId,
+            QuizTitle = quiz.Title,
+            TotalQuestions = quiz.Questions.Count,
+            TotalScore = 0,
+            MaxScore = quiz.Questions.Sum(q => q.Points)
+        };
+
+        foreach (var q in quiz.Questions)
+        {
+            var response = model.Responses?.FirstOrDefault(r => r.QuestionId == q.QuestionId);
+            var selectedIds = response?.SelectedAnswerIds ?? new List<int>();
+            var correctIds = q.Answers?.Where(a => a.IsCorrect).Select(a => a.AnswerId).ToHashSet() ?? new HashSet<int>();
+
+            var isCorrect = selectedIds.Count > 0 && selectedIds.All(id => correctIds.Contains(id)) && correctIds.SetEquals(selectedIds);
+
+            if (isCorrect)
+            {
+                result.QuestionsCorrect += 1;
+                result.TotalScore += q.Points;
+            }
+
+            result.QuestionResults.Add(new QuestionResultViewModel
+            {
+                QuestionId = q.QuestionId,
+                QuestionText = q.QuestionText,
+                Points = q.Points,
+                IsCorrect = isCorrect,
+                SelectedAnswers = q.Answers?.Where(a => selectedIds.Contains(a.AnswerId)).Select(a => a.AnswerText).ToList() ?? new List<string>(),
+                CorrectAnswers = q.Answers?.Where(a => a.IsCorrect).Select(a => a.AnswerText).ToList() ?? new List<string>()
+            });
+        }
+
+        return View("Result", result);
+    }
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateQuizViewModel quizModel)
     {
         if (!ModelState.IsValid)
