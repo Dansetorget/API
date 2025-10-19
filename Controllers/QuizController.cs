@@ -34,8 +34,9 @@ public class QuizController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Take(int id) // takes the quiz id and gets the quiz from the database
+    public async Task<IActionResult> Take(int id)
     {
+        // takes the quiz id and gets the quiz from the database
         var quiz = await _quizRepository.GetQuizById(id);
         if (quiz == null)
         {
