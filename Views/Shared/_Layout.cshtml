@@ -1,56 +1,57 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Bootstrap5_øving</title>
+    <title>@ViewData["Title"] - Quizzly Bear</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Bootstrap5_øving.styles.css" asp-append-version="true" />
     <link rel="icon" type="image/png" href="~/images/bear.png" asp-append-version="true" />
     <link rel="icon" href="~/favicon.ico" type="image/x-icon" asp-append-version="true" />
 </head>
 
 <body class="d-flex flex-column min-vh-100">
     <!-- Navbar -->
-<header class="sticky-top">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold fs-4" href="/">Quizzly</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Quiz" asp-action="Index">Quizzes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Quiz" asp-action="Create">Create Quiz</a>
-                    </li>
-                </ul>
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold fs-4" href="/">Quizzly</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Quiz" asp-action="Index">Quizzes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Quiz" asp-action="Create">Create Quiz</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
-</header>
+        </nav>
+    </header>
 
 
     <!-- Main section -->
-<main class="flex-fill" style="background: linear-gradient(to bottom right, #f9fafb, #dbeafe, #f3f4f6);">
-    @RenderBody()
-</main>
+    <main class="flex-fill" style="background: linear-gradient(to bottom right, #f9fafb, #dbeafe, #f3f4f6);">
+        @RenderBody()
+    </main>
 
 
     <!-- Footer -->
     <footer class="footer bg-dark text-white py-4">
-  <div class="container d-flex justify-content-center align-items-center">
-    <p class="mb-0">© 2025 Quizzly</p>
-  </div>
-</footer>
+        <div class="container d-flex justify-content-center align-items-center">
+            <p class="mb-0">© 2025 Quizzly</p>
+        </div>
+    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>
