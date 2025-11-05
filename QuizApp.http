@@ -1,7 +1,7 @@
-@baseUrl = https://localhost:5243/api
+@baseUrl = http://localhost:5243/api
 
 ### Get all quizzes
-GET {{baseUrl}}/quiz
+GET {{baseUrl}}/QuizAPI
 
 ### Get quiz by ID
 GET {{baseUrl}}/quiz/1

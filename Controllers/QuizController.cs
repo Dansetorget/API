@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using QuizApp.DAL;
 using QuizApp.Models;
+using QuizApp.DTOs;
 
 
 namespace QuizApp.Controllers;
 
-public class QuizController : Controller
+[ApiController]
+// [Route("api/[controller]")]
+public class QuizController : ControllerBase
 {
     private readonly IQuizRepository _quizRepository;
     private readonly ILogger<QuizController> _logger;
@@ -15,6 +18,7 @@ public class QuizController : Controller
         _quizRepository = quizRepository;
         _logger = logger;
     }
+
     public async Task<IActionResult> Index()
     {
         var quizzes = await _quizRepository.GetAll();
