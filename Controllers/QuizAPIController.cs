@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using QuizApp.DAL;
-using QuizApp.Models;
 using QuizApp.DTOs;
+using QuizApp.Models;
 
 namespace QuizApp.Controllers;
 
@@ -21,14 +21,14 @@ public class QuizAPIController : ControllerBase
     /// <summary>
     /// Get all quizzes
     /// </summary>
-    [HttpGet]
+    [HttpGet("quizlist")]
     [ProducesResponseType(typeof(List<QuizDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
         try
         {
             var quizzes = await _quizRepository.GetAll();
-            
+
             if (quizzes == null || !quizzes.Any())
             {
                 return Ok(new List<QuizDto>());
@@ -62,7 +62,7 @@ public class QuizAPIController : ControllerBase
         try
         {
             var quiz = await _quizRepository.GetQuizById(id);
-            
+
             if (quiz == null)
             {
                 _logger.LogWarning("[QuizAPIController] GetById: Quiz not found for QuizId {QuizId}", id);
@@ -101,7 +101,7 @@ public class QuizAPIController : ControllerBase
     /// <summary>
     /// Create a new quiz
     /// </summary>
-    [HttpPost]
+    [HttpPost("create")]
     [ProducesResponseType(typeof(QuizDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateQuizDto createQuizDto)
@@ -132,7 +132,7 @@ public class QuizAPIController : ControllerBase
             };
 
             var result = await _quizRepository.Create(quiz);
-            
+
             if (!result)
             {
                 _logger.LogError("[QuizAPIController] Create: Failed to create quiz");
@@ -159,7 +159,7 @@ public class QuizAPIController : ControllerBase
     /// <summary>
     /// Update an existing quiz
     /// </summary>
-    [HttpPut("{id}")]
+    [HttpPut("update/{id}")]
     [ProducesResponseType(typeof(QuizDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -173,7 +173,7 @@ public class QuizAPIController : ControllerBase
             }
 
             var existingQuiz = await _quizRepository.GetQuizById(id);
-            
+
             if (existingQuiz == null)
             {
                 _logger.LogWarning("[QuizAPIController] Update: Quiz not found for QuizId {QuizId}", id);
@@ -185,7 +185,7 @@ public class QuizAPIController : ControllerBase
             existingQuiz.Description = updateQuizDto.Description;
 
             var result = await _quizRepository.Update(existingQuiz);
-            
+
             if (!result)
             {
                 _logger.LogError("[QuizAPIController] Update: Failed to update quiz {QuizId}", id);
@@ -212,7 +212,7 @@ public class QuizAPIController : ControllerBase
     /// <summary>
     /// Delete a quiz
     /// </summary>
-    [HttpDelete("{id}")]
+    [HttpDelete("delete/{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
@@ -220,7 +220,7 @@ public class QuizAPIController : ControllerBase
         try
         {
             var quiz = await _quizRepository.GetQuizById(id);
-            
+
             if (quiz == null)
             {
                 _logger.LogWarning("[QuizAPIController] Delete: Quiz not found for QuizId {QuizId}", id);
@@ -228,7 +228,7 @@ public class QuizAPIController : ControllerBase
             }
 
             var result = await _quizRepository.Delete(id);
-            
+
             if (!result)
             {
                 _logger.LogError("[QuizAPIController] Delete: Failed to delete quiz {QuizId}", id);
@@ -268,7 +268,7 @@ public class QuizAPIController : ControllerBase
 
             // Get the quiz from the database
             var quiz = await _quizRepository.GetQuizById(id);
-            
+
             if (quiz == null || quiz.Questions == null)
             {
                 _logger.LogWarning("[QuizAPIController] Submit: Quiz not found for QuizId {QuizId}", id);
@@ -295,8 +295,8 @@ public class QuizAPIController : ControllerBase
                 var correctIds = question.Answers?.Where(a => a.IsCorrect).Select(a => a.AnswerId).ToHashSet() ?? new HashSet<int>();
 
                 // Check if all selected answers are correct and all correct answers are selected
-                var isCorrect = selectedIds.Count > 0 
-                    && selectedIds.All(id => correctIds.Contains(id)) 
+                var isCorrect = selectedIds.Count > 0
+                    && selectedIds.All(id => correctIds.Contains(id))
                     && correctIds.SetEquals(selectedIds);
 
                 if (isCorrect)

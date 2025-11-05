@@ -51,7 +51,7 @@ if (app.Environment.IsDevelopment())
 {
     DBInit.Seed(app);
     app.UseSwagger();
-    app.UseSwagger();
+    app.UseSwaggerUi();
 }
 
 
