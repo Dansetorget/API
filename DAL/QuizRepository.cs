@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using QuizApp.Models;
+using QuizApi.Models;
 
-namespace QuizApp.DAL;
+namespace QuizApi.DAL;
 
 public class QuizRepository : IQuizRepository
 {

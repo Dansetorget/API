@@ -6,5 +6,9 @@
 **/build
 **/Logs
 **/APILogs
+
+QuizDatabase.db
 QuizDatabase.db-wal
 QuizDatabase.db-shm
+
+.fake
