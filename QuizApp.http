@@ -1,0 +1,28 @@
+@baseUrl = https://localhost:5001/api
+
+### Get all quizzes
+GET {{baseUrl}}/quiz
+
+### Get quiz by ID
+GET {{baseUrl}}/quiz/1
+
+### Create a new quiz
+POST {{baseUrl}}/quiz
+Content-Type: application/json
+
+{
+  "title": "C# Basics",
+  "description": "Test your knowledge of C# fundamentals"
+}
+
+### Update quiz
+PUT {{baseUrl}}/quiz/1
+Content-Type: application/json
+
+{
+  "title": "Updated C# Basics",
+  "description": "Updated description"
+}
+
+### Delete quiz
+DELETE {{baseUrl}}/quiz/1

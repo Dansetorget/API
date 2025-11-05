@@ -1,14 +1,20 @@
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Serialization;
 using QuizApp.DAL;
 using Serilog;
 using Serilog.Events;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllers().AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+    // options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+});
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 // Add database context
 builder.Services.AddDbContext<QuizDbContext>(options =>
 {
@@ -16,13 +22,20 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
+builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy",
+        builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 // Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
 
 var loggerConfiguration = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.File($"Logs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+    .MinimumLevel.Information() // levels: Trace< Information < Warning < Erorr < Fatal
+    .WriteTo.File($"APILogs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log");
 
 loggerConfiguration.Filter.ByExcluding(e => e.Properties.TryGetValue("SourceContext", out var value) &&
                             e.Level == LogEventLevel.Information &&
@@ -36,17 +49,18 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     DBInit.Seed(app);
+    app.UseSwagger();
+    app.UseSwagger();
 }
 
-app.UseHttpsRedirection();
+
 app.UseStaticFiles();
-
 app.UseRouting();
+app.UseCors("CorsPolicy");
+// app.UseAuthorization();
+app.MapControllers();
 
-app.UseAuthorization();
-
-app.MapDefaultControllerRoute();
 
 app.Run();
+
