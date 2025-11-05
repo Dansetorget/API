@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using QuizApp.Models;
+using QuizApi.Models;
 
-namespace QuizApp.DAL;
+namespace QuizApi.DAL;
 
 public class QuizDbContext : DbContext
 {
