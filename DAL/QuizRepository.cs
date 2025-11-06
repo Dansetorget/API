@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using QuizApp.Models;
+using QuizApi.Models;
 
-namespace QuizApp.DAL;
+namespace QuizApi.DAL;
 
 public class QuizRepository : IQuizRepository
 {
@@ -19,7 +19,10 @@ public class QuizRepository : IQuizRepository
     {
         try
         {
-            return await _db.Quizzes.ToListAsync();
+            return await _db.Quizzes
+                .Include(q => q.Questions!)
+                .ThenInclude(a => a.Answers)
+                .ToListAsync();
         }
         catch (Exception)
         {

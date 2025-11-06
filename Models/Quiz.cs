@@ -1,4 +1,4 @@
-namespace QuizApp.Models;
+namespace QuizApi.Models;
 
 public class Quiz
 {

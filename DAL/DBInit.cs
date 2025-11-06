@@ -1,6 +1,6 @@
-using QuizApp.Models;
+using QuizApi.Models;
 
-namespace QuizApp.DAL;
+namespace QuizApi.DAL;
 
 public static class DBInit
 {
