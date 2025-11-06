@@ -19,10 +19,13 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ItemDbContext>();
+builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<QuizDbContext>();
 
 // Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+
+builder.Services.AddRazorPages();
+builder.Services.AddSession();// used for authentication and authorisation
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -39,11 +42,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.UseAuthentication();
-
+app.UseAuthorization();
 app.MapControllers();
-
+app.MapRazorPages();
 app.Run();
