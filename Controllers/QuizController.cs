@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
+using QuizApi.DTOs;
 using QuizApi.Models;
 
 namespace QuizApi.Controllers
@@ -28,9 +30,12 @@ namespace QuizApi.Controllers
 
         // GET: api/Quiz
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Quiz>>> GetQuizzes()
+        public async Task<ActionResult<IEnumerable<QuizDTO>>> GetQuizzes()
         {
-            return await _context.Quizzes.ToListAsync();
+            var quizzes = await _quizRepository.GetAll();
+            var quizDtos = quizzes!.Select(QuizToDTO).ToList();
+            return Ok(quizDtos);
+
         }
 
         // GET: api/Quiz/5
@@ -109,5 +114,32 @@ namespace QuizApi.Controllers
         {
             return _context.Quizzes.Any(e => e.QuizId == id);
         }
+
+        private static QuizDTO QuizToDTO(Quiz quiz) =>
+         new QuizDTO
+         {
+             Id = quiz.QuizId,
+             Title = quiz.Title,
+             Description = quiz.Description ?? string.Empty,
+             Questions = quiz.Questions?.Select(QuestionToDTO).ToList() ?? new List<QuestionDTO>()
+         };
+
+        private static QuestionDTO QuestionToDTO(Question question) =>
+            new QuestionDTO
+            {
+                Id = question.QuestionId,
+                QuestionText = question.QuestionText,
+                Points = question.Points,
+                Answers = question.Answers?.Select(AnswerToDTO).ToList() ?? new List<AnswerDTO>()
+            };
+
+        private static AnswerDTO AnswerToDTO(Answer answer) =>
+            new AnswerDTO
+            {
+                Id = answer.AnswerId,
+                AnswerText = answer.AnswerText,
+                IsCorrect = answer.IsCorrect
+            };
+
     }
 }

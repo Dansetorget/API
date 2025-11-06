@@ -1,4 +1,4 @@
-namespace QuizApp.DTOs;
+namespace QuizApi.DTOs;
 
 public class SubmitQuizDTO
 {

@@ -10,8 +10,8 @@ using QuizApi.DAL;
 namespace QuizApi.Migrations
 {
     [DbContext(typeof(QuizDbContext))]
-    [Migration("20251105201500_InitDb")]
-    partial class InitDb
+    [Migration("20251106111238_QuizDbExpanded")]
+    partial class QuizDbExpanded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

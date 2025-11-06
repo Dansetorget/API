@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace QuizApp.DTOs;
+namespace QuizApi.DTOs;
 
 public class QuizDTO
 {
