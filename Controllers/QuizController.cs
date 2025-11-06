@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using QuizApi.DTOs;
+using QuizApi.Mappers;
 using QuizApi.Models;
 
 namespace QuizApi.Controllers
@@ -33,12 +34,13 @@ namespace QuizApi.Controllers
         public async Task<ActionResult<IEnumerable<QuizDTO>>> GetQuizzes()
         {
             var quizzes = await _quizRepository.GetAll();
-            var quizDtos = quizzes!.Select(QuizToDTO).ToList();
+            var quizDtos = quizzes.Adapt<List<QuizDTO>>();
             return Ok(quizDtos);
 
         }
 
         // GET: api/Quiz/5
+        // Use this to take a specific quiz
         [HttpGet("{id}")]
         public async Task<ActionResult<Quiz>> GetQuiz(int id)
         {
@@ -50,29 +52,43 @@ namespace QuizApi.Controllers
                 return NotFound();
             }
 
-            var quizDto = QuizToDTO(quiz);
+            var quizDto = quiz.Adapt<QuizDTO>();
             return Ok(quizDto);
         }
 
-        // PUT: api/Quiz/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutQuiz(int id, Quiz quiz)
+        // Patch: api/Quiz/5
+        // For å bruke denne metoden, hent først en quiz med GetQuiz(int id) inn i et form
+        // Bruk så denne ved å trykke på Bekreft-knappen.
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateQuiz(int id, QuizDTO quizDto)
         {
-            if (id != quiz.QuizId)
+            if (id != quizDto.Id)
             {
-                return BadRequest();
+                _logger.LogWarning("ID mismatch in URL and body: {UrlId} vs {DtoId}", id, quizDto.Id);
+                return BadRequest("ID mismatch");
             }
 
-            _context.Entry(quiz).State = EntityState.Modified;
+            // Get existing quiz from database
+            var existingQuiz = await _quizRepository.GetQuizById(id);
+            if (existingQuiz == null)
+            {
+                return NotFound();
+            }
 
+            // Using Mapster to update existing entity with DTO data
+            quizDto.Adapt(existingQuiz);
             try
             {
-                await _context.SaveChangesAsync();
+                var success = await _quizRepository.Update(existingQuiz);
+                if (!success)
+                {
+                    // Log dette
+                    return StatusCode(500, "Failed to update quiz");
+                }
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!QuizExists(id))
+                if (!await QuizExists(id))
                 {
                     return NotFound();
                 }
@@ -88,60 +104,42 @@ namespace QuizApi.Controllers
         // POST: api/Quiz
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Quiz>> PostQuiz(Quiz quiz)
+        public async Task<ActionResult<Quiz>> CreateQuiz(QuizDTO quizDto)
         {
-            _context.Quizzes.Add(quiz);
-            await _context.SaveChangesAsync();
+            var quiz = quizDto.Adapt<Quiz>();
 
-            return CreatedAtAction("GetQuiz", new { id = quiz.QuizId }, quiz);
+            var createdQuiz = await _quizRepository.Create(quiz);
+            if (!createdQuiz)
+            {
+                // Log error
+                return StatusCode(500, "Failed to create quiz");
+            }
+
+            var createdQuizDto = createdQuiz.Adapt<QuizDTO>();
+            return CreatedAtAction(nameof(GetQuiz), new { id = createdQuizDto.Id }, createdQuizDto);
         }
 
         // DELETE: api/Quiz/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuiz(int id)
         {
-            var quiz = await _context.Quizzes.FindAsync(id);
+            var quiz = await _quizRepository.GetQuizById(id);
             if (quiz == null)
             {
                 return NotFound();
             }
 
-            _context.Quizzes.Remove(quiz);
-            await _context.SaveChangesAsync();
+            await _quizRepository.Delete(id);
 
             return NoContent();
         }
 
-        private bool QuizExists(int id)
+        private async Task<bool> QuizExists(int id)
         {
-            return _context.Quizzes.Any(e => e.QuizId == id);
+            return await _quizRepository.GetQuizById(id) != null;
         }
 
-        private static QuizDTO QuizToDTO(Quiz quiz) =>
-         new QuizDTO
-         {
-             Id = quiz.QuizId,
-             Title = quiz.Title,
-             Description = quiz.Description ?? string.Empty,
-             Questions = quiz.Questions?.Select(QuestionToDTO).ToList() ?? new List<QuestionDTO>()
-         };
 
-        private static QuestionDTO QuestionToDTO(Question question) =>
-            new QuestionDTO
-            {
-                Id = question.QuestionId,
-                QuestionText = question.QuestionText,
-                Points = question.Points,
-                Answers = question.Answers?.Select(AnswerToDTO).ToList() ?? new List<AnswerDTO>()
-            };
-
-        private static AnswerDTO AnswerToDTO(Answer answer) =>
-            new AnswerDTO
-            {
-                Id = answer.AnswerId,
-                AnswerText = answer.AnswerText,
-                IsCorrect = answer.IsCorrect
-            };
 
     }
 }

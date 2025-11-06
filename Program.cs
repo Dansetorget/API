@@ -1,31 +1,39 @@
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
+using QuizApi.MapsterConfig.cs;
 using Serilog;
 using Serilog.Events;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ===== Configuration & Logging =====
+// (Add any configuration or logging setup here if needed)
 
-builder.Services.AddControllers();
-// Add database context
+
+// ===== Database Services =====
 builder.Services.AddDbContext<QuizDbContext>(options =>
 {
     options.UseSqlite(
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
-// Repositories
+// ===== Application Services =====
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// ===== API Services =====
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// ===== Third-Party Services =====
+MapsterConfig.Configure();
+builder.Services.AddMapster();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ===== Development Configuration =====
 if (app.Environment.IsDevelopment())
 {
     DBInit.Seed(app);
@@ -33,10 +41,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+// ===== Middleware Pipeline =====
 app.UseHttpsRedirection();
-
+app.UseRouting();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
