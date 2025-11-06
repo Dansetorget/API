@@ -2,9 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using Serilog;
 using Serilog.Events;
+using Microsoft.AspNetCore.Identity;
+using QuizApi.Areas.Identity.Data;
 
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("ItemDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ItemDbContextConnection' not found.");
 
 // Add services to the container.
 
@@ -15,6 +18,8 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
     options.UseSqlite(
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ItemDbContext>();
 
 // Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
