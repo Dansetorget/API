@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
+using QuizApi.DTOs;
 using QuizApi.Models;
 
 namespace QuizApi.Controllers
@@ -28,9 +30,13 @@ namespace QuizApi.Controllers
 
         // GET: api/Quiz
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Quiz>>> GetQuizzes()
+        public async Task<ActionResult<IEnumerable<QuizDTO>>> GetQuizzes()
         {
-            return await _context.Quizzes.ToListAsync();
+            var quizzes = await _quizRepository.GetAll();
+            var quizDtos = quizzes.Adapt<List<QuizDTO>>();
+
+            return Ok(quizDtos);
+
         }
 
         // GET: api/Quiz/5
@@ -109,5 +115,7 @@ namespace QuizApi.Controllers
         {
             return _context.Quizzes.Any(e => e.QuizId == id);
         }
+
+
     }
 }

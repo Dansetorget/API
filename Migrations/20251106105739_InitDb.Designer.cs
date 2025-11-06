@@ -10,7 +10,7 @@ using QuizApi.DAL;
 namespace QuizApi.Migrations
 {
     [DbContext(typeof(QuizDbContext))]
-    [Migration("20251105201500_InitDb")]
+    [Migration("20251106105739_InitDb")]
     partial class InitDb
     {
         /// <inheritdoc />

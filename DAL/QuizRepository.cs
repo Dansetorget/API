@@ -19,7 +19,10 @@ public class QuizRepository : IQuizRepository
     {
         try
         {
-            return await _db.Quizzes.ToListAsync();
+            return await _db.Quizzes
+                .Include(q => q.Questions!)
+                .ThenInclude(a => a.Answers)
+                .ToListAsync();
         }
         catch (Exception)
         {
