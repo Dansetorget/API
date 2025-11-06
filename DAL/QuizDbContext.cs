@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.Models;
 
 namespace QuizApi.DAL;
 
-public class QuizDbContext : DbContext
+public class QuizDbContext : IdentityDbContext
 {
     public QuizDbContext(DbContextOptions<QuizDbContext> options) : base(options)
     {
