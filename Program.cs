@@ -24,7 +24,6 @@ builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<Qui
 // Repositories
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
-builder.Services.AddRazorPages();
 builder.Services.AddSession();// used for authentication and authorisation
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -45,5 +44,4 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapRazorPages();
 app.Run();
