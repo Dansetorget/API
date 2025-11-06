@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace QuizApp.DTOs;
 
-public class QuizDTO 
+public class QuizDTO
 {
-     public int Id { get; set; }
+    public int Id { get; set; }
     [Required(ErrorMessage = "Tittel er påkrevd")]
     public string Title { get; set; } = string.Empty;
     [Required(ErrorMessage = "Beskrivelse er påkrevd")]
