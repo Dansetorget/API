@@ -42,14 +42,16 @@ namespace QuizApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Quiz>> GetQuiz(int id)
         {
-            var quiz = await _context.Quizzes.FindAsync(id);
+            var quiz = await _quizRepository.GetQuizById(id);
+
 
             if (quiz == null)
             {
                 return NotFound();
             }
 
-            return quiz;
+            var quizDto = QuizToDTO(quiz);
+            return Ok(quizDto);
         }
 
         // PUT: api/Quiz/5
