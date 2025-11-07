@@ -6,13 +6,49 @@ using Serilog;
 using Serilog.Events;
 using Microsoft.AspNetCore.Identity;
 using QuizApi.Areas.Identity.Data;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using QuizApi.Models;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("ItemDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ItemDbContextConnection' not found.");
 
 // ===== Configuration & Logging =====
 // (Add any configuration or logging setup here if needed)
+
+// Configures Swagger (OpenAPI) for API and enable JWT authentication within the Swagger UI
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Quiz API", Version = "v1" }); // Basic metadata
+    // API expects to receive authentication credentials as a JWT token in the Authorization header with the "Bearer " prefix
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header. Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+    // Apply the "Bearer" to all API endpoints. This adds the "Authorize" button to the Swagger UI, allowing you to enter a JWT token to test your protected endpoints
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 
 // ===== Database Services =====
@@ -22,11 +58,83 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
+builder.Services.AddDbContext<AuthDbContext>(options =>
+    options.UseSqlite(builder.Configuration["ConnectionStrings:AuthDbContextConnection"]));
+
+builder.Services.AddIdentity<AuthUser, IdentityRole>()
+    .AddEntityFrameworkStores<AuthDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000") // Allow requests from this origin (React frontend)
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });
+});
+
+// ===== Authentication Services =====
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+    {
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false; // Set to true in production
+        options.TokenValidationParameters = new TokenValidationParameters() // The validation rules for the token.
+        {
+            ValidateIssuer = true, // Validate that the token was issued by a trusted issuer
+            ValidateAudience = true, // Validate the token recipient
+            ValidateLifetime = true, // Validate that the token is not expired
+            ValidateIssuerSigningKey = true, // Validate the JWT signature
+            ValidAudience = builder.Configuration["JWT:ValidAudience"], // Reading the recipient of the token
+            ValidIssuer = builder.Configuration["JWT:ValidIssuer"], // Reading the issuer of the token
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration."))) // Reading the secret key used to sign the token
+        };
+        options.Events = new JwtBearerEvents // Debugging tools for JWT authentication process 
+        {
+            OnMessageReceived = context => // Triggered when a message is received, logs the token,useful for checking if the token is being sent correctly by the client
+        {
+            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").LastOrDefault();
+            Console.WriteLine($"OnMessageReceived – Token: {token}");
+            return Task.CompletedTask;
+        },
+            OnTokenValidated = context => // Triggered when a token is successfully validated
+            {
+                Console.WriteLine("OnTokenValidated: SUCCESS");
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context => // Triggered when authentication fails for any reason 
+            {
+                Console.WriteLine($"OnAuthenticationFailed: {context.Exception.Message}");
+                Console.WriteLine($"Exception Type: {context.Exception.GetType().Name}");
+                if (context.Exception.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {context.Exception.InnerException.Message}");
+                }
+                return Task.CompletedTask;
+            },
+            OnChallenge = context => // Triggered when an unauthenticated request attempts to access an authorized resource. Send appropriate error message back to the client (401)
+            {
+                Console.WriteLine($"OnChallenge: {context.Error} – {context.ErrorDescription}");
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<QuizDbContext>();
 
 // ===== Application Services =====
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
-
 builder.Services.AddSession();// used for authentication and authorisation
 
 // ===== API Services =====
@@ -48,10 +156,41 @@ if (app.Environment.IsDevelopment())
 }
 
 
-// ===== Middleware Pipeline =====
+// ===== Middlewares (order is important!) =====
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors("CorsPolicy");
+
+// Custom middleware that manually inspect the JWT token for debugging purposes
+// If you encounter bugs, you can comment this in
+
+/*app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+    {
+        var headerValue = authHeader.FirstOrDefault();
+        if (headerValue?.StartsWith("Bearer ") == true)
+        {
+            var token = headerValue.Substring("Bearer ".Length).Trim();
+
+            // Decode the token to see its contents (without verification)
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadJwtToken(token);
+
+            Console.WriteLine($"--> Token Issuer: {jsonToken.Issuer}");
+            Console.WriteLine($"--> Token Audience: {jsonToken.Audiences.FirstOrDefault()}");
+            Console.WriteLine($"--> Token Expiry: {jsonToken.ValidTo}");
+            Console.WriteLine($"--> Current Time: {DateTime.UtcNow}");
+            Console.WriteLine($"--> Config Issuer: {builder.Configuration["Jwt:Issuer"]}");
+            Console.WriteLine($"--> Config Audience: {builder.Configuration["Jwt:Audience"]}");
+        }
+    }
+
+    await next.Invoke();
+});*/
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
