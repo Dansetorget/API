@@ -127,6 +127,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+
+
 // ===== Application Services =====
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddDistributedMemoryCache(); // required backing store for session middleware
@@ -148,6 +150,12 @@ if (app.Environment.IsDevelopment())
     DBInit.Seed(app);
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
 }
 
 

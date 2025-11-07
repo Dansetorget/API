@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -64,6 +65,12 @@ namespace QuizApi.Controllers
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateQuiz(int id, QuizDTO quizDto)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Brukeridentitet mangler.");
+            }
+
             if (id != quizDto.Id)
             {
                 _logger.LogWarning("ID mismatch in URL and body: {UrlId} vs {DtoId}", id, quizDto.Id);
@@ -75,6 +82,11 @@ namespace QuizApi.Controllers
             if (existingQuiz == null)
             {
                 return NotFound();
+            }
+
+            if (!string.Equals(existingQuiz.OwnerId, userId, StringComparison.Ordinal)) // Only the owner/creator can update the quiz
+            {
+                return Forbid();
             }
 
             // Using Mapster to update existing entity with DTO data
@@ -109,7 +121,14 @@ namespace QuizApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Quiz>> CreateQuiz(QuizDTO quizDto)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID from the JWT token
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Brukeridentitet mangler.");
+            }
+
             var quiz = quizDto.Adapt<Quiz>();
+            quiz.OwnerId = userId; // Set the owner of the quiz to the logged-in user
 
             var createdQuiz = await _quizRepository.Create(quiz);
             if (!createdQuiz)
@@ -127,10 +146,21 @@ namespace QuizApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuiz(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Brukeridentitet mangler.");
+            }
+
             var quiz = await _quizRepository.GetQuizById(id);
             if (quiz == null)
             {
                 return NotFound();
+            }
+
+            if (!string.Equals(quiz.OwnerId, userId, StringComparison.Ordinal)) // Only the owner/creator can delete the quiz
+            {
+                return Forbid();
             }
 
             await _quizRepository.Delete(id);
