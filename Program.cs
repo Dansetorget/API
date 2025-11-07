@@ -93,8 +93,8 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = true, // Validate the token recipient
             ValidateLifetime = true, // Validate that the token is not expired
             ValidateIssuerSigningKey = true, // Validate the JWT signature
-            ValidAudience = builder.Configuration["JWT:ValidAudience"], // Reading the recipient of the token
-            ValidIssuer = builder.Configuration["JWT:ValidIssuer"], // Reading the issuer of the token
+            ValidAudience = builder.Configuration["Jwt:Audience"], // Reading the recipient of the token
+            ValidIssuer = builder.Configuration["Jwt:Issuer"], // Reading the issuer of the token
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
                 builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration."))) // Reading the secret key used to sign the token
         };
