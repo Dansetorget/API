@@ -24,8 +24,6 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
 
 builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<QuizDbContext>();
 
-builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<QuizDbContext>();
-
 // ===== Application Services =====
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 
@@ -38,7 +36,6 @@ builder.Services.AddSwaggerGen();
 
 // ===== Third-Party Services =====
 MapsterConfig.Configure();
-builder.Services.AddMapster();
 
 var app = builder.Build();
 
