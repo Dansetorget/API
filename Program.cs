@@ -2,15 +2,11 @@ using Mapster;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using QuizApi.MapsterConfig.cs;
-using Serilog;
-using Serilog.Events;
 using Microsoft.AspNetCore.Identity;
-using QuizApi.Areas.Identity.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using QuizApi.Models;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
