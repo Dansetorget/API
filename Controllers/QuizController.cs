@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Mapster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,7 @@ namespace QuizApi.Controllers
         // Patch: api/Quiz/5
         // For å bruke denne metoden, hent først en quiz med GetQuiz(int id) inn i et form
         // Bruk så denne ved å trykke på Bekreft-knappen.
+        [Authorize] // Only user who have created the quiz can update it
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateQuiz(int id, QuizDTO quizDto)
         {
@@ -103,6 +105,7 @@ namespace QuizApi.Controllers
 
         // POST: api/Quiz
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize] // Only logged in users can create quizzes
         [HttpPost]
         public async Task<ActionResult<Quiz>> CreateQuiz(QuizDTO quizDto)
         {
@@ -120,6 +123,7 @@ namespace QuizApi.Controllers
         }
 
         // DELETE: api/Quiz/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuiz(int id)
         {
