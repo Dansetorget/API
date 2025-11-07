@@ -28,6 +28,7 @@ namespace QuizApi.Controllers
         }
 
         // Endpoint for user registration
+        [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
@@ -35,37 +36,46 @@ namespace QuizApi.Controllers
             {
                 UserName = registerDto.Username,
                 Email = registerDto.Email,
-                // FirstName = registerDto.FirstName,
-                // LastName = registerDto.LastName
             };
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-                _logger.LogInformation("[AuthAPIController] user registered for {@username}", registerDto.Username);
-                return Ok(new { Message = "User registered successfully" });
+                _logger.LogWarning("[AuthController] Registration failed for {Username}", registerDto.Username);
+                return BadRequest(result.Errors);
             }
+            // Assign role user to newly registered users
+            if (!await _userManager.IsInRoleAsync(user, "User"))
+                await _userManager.AddToRoleAsync(user, "User");
 
-            _logger.LogWarning("[AuthAPIController] user registration failed for {@username}", registerDto.Username);
-            return BadRequest(result.Errors);
+            _logger.LogInformation("[AuthController] User registered: {Username}", registerDto.Username);
+            return Ok(new { Message = "User registered successfully" });
         }
 
         // Endpoint for user login
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var user = await _userManager.FindByNameAsync(loginDto.Username);
+            var user = await _userManager.FindByNameAsync(loginDto.Username); // Find the user by username
 
-            if (user != null && await _userManager.CheckPasswordAsync(user, loginDto.Password))
+            if (user == null)
             {
-                _logger.LogInformation("[AuthAPIController] user authorised for {@username}", loginDto.Username);
-                var token = GenerateJwtToken(user);
-                return Ok(new { Token = token });
+                _logger.LogWarning("[AuthController] Login failed (no such user) for {Username}", loginDto.Username);
+                return Unauthorized(new { Message = "Invalid credentials" });
             }
 
-            _logger.LogWarning("[AuthAPIController] user not authorised for {@username}", loginDto.Username);
-            return Unauthorized();
+            var valid = await _userManager.CheckPasswordAsync(user, loginDto.Password); // Check if the provided password is correct
+            if (!valid)
+            {
+                _logger.LogWarning("[AuthController] Login failed (invalid password) for {Username}", loginDto.Username);
+                return Unauthorized(new { Message = "Invalid credentials" });
+            }
+
+            var token = await GenerateJwtTokenAsync(user);
+            _logger.LogInformation("[AuthController] Login success for {Username}", loginDto.Username);
+            return Ok(new { Token = token });
+
         }
 
         [Authorize]
@@ -80,31 +90,45 @@ namespace QuizApi.Controllers
         }
 
         // A private helper method responsible for creating the JWT.
-        private string GenerateJwtToken(AuthUser user)
+        private async Task<string> GenerateJwtTokenAsync(AuthUser user)
         {
-            var jwtKey = _configuration["Jwt:Key"]; // The secret key used for signing the token
-            if (string.IsNullOrEmpty(jwtKey)) // Checking if the key is null or empty
+            var key = _configuration["Jwt:Key"]; // The secret key used for signing the token
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
+
+            if (string.IsNullOrEmpty(key)) // Checking if the key is null or empty
             {
                 _logger.LogError("[AuthAPIController] JWT key is missing from configuration.");
                 throw new InvalidOperationException("JWT key is missing from configuration.");
             }
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)); // Reading the key from the configuration
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)); // Reading the key from the configuration
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); // Using HMAC SHA256 algorithm for signing the token
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName!),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // Unique identifier for the token
-                new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()) // Issued at timestamp
+                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                // iat som seconds-since-epoch (UTC)
+                new Claim(JwtRegisteredClaimNames.Iat,
+                          DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                          ClaimValueTypes.Integer64)
             };
 
+            // Include user roles as claims
+            var roles = await _userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+                claims.Add(new Claim(ClaimTypes.Role, role));
+
+            var now = DateTime.UtcNow;
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: issuer,
+                audience: audience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(120), // Token expiration time set to 120 minutes
+                notBefore: now,
+                expires: now.AddMinutes(120), // Token expiration time set to 120 minutes
                 signingCredentials: credentials); // Signing the token with the specified credentials
 
             _logger.LogInformation("[AuthAPIController] JWT token created for {@username}", user.UserName);

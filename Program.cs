@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using QuizApi.Models;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("ItemDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ItemDbContextConnection' not found.");
@@ -92,7 +93,8 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = builder.Configuration["Jwt:Audience"], // Reading the recipient of the token
             ValidIssuer = builder.Configuration["Jwt:Issuer"], // Reading the issuer of the token
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration."))) // Reading the secret key used to sign the token
+                builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration."))), // Reading the secret key used to sign the token
+            RoleClaimType = ClaimTypes.Role // User role information
         };
         options.Events = new JwtBearerEvents // Debugging tools for JWT authentication process 
         {
@@ -152,12 +154,26 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// ===== Create Default Roles and Admin User =====
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
-}
 
+    string[] roleNames = { "Admin", "User" };
+
+    foreach (var name in roleNames)
+        if (!await roleManager.RoleExistsAsync(name))
+            await roleManager.CreateAsync(new IdentityRole(name));
+
+    var admin = await userManager.FindByNameAsync("admin");
+    if (admin == null)
+    {
+        admin = new AuthUser { UserName = "admin", Email = "admin@example.com" };
+        await userManager.CreateAsync(admin, "Admin123!");
+        await userManager.AddToRoleAsync(admin, "Admin");
+    }
+}
 
 // ===== Middlewares (order is important!) =====
 app.UseHttpsRedirection();
