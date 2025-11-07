@@ -131,10 +131,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<QuizDbContext>();
-
 // ===== Application Services =====
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+builder.Services.AddDistributedMemoryCache(); // required backing store for session middleware
 builder.Services.AddSession();// used for authentication and authorisation
 
 // ===== API Services =====
