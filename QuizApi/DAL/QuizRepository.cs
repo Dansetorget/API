@@ -38,7 +38,7 @@ public class QuizRepository : IQuizRepository
             return await _db.Quizzes
                 .Include(q => q.Questions!)
                 .ThenInclude(q => q.Answers)
-                .FirstOrDefaultAsync(q => q.QuizId == id);
+                .FirstOrDefaultAsync(q => q.Id == id);
         }
         catch (Exception)
         {
@@ -76,7 +76,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            _logger.LogError("[QuizRepository] AddQuestionToQuiz: Error adding question to quiz with ID {QuizId:0000}", quiz.QuizId);
+            _logger.LogError("[QuizRepository] AddQuestionToQuiz: Error adding question to quiz with ID {QuizId:0000}", quiz.Id);
             return false;
         }
     }
@@ -92,7 +92,7 @@ public class QuizRepository : IQuizRepository
         }
         catch (Exception)
         {
-            _logger.LogError("[QuizRepository] Update: Error updating quiz with ID {QuizId:0000}", quiz.QuizId);
+            _logger.LogError("[QuizRepository] Update: Error updating quiz with ID {QuizId:0000}", quiz.Id);
             return false;
         }
     }

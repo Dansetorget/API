@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using QuizApi.DTOs;
-using QuizApi.Mappers;
 using QuizApi.Models;
 
 namespace QuizApi.Controllers
@@ -33,9 +32,19 @@ namespace QuizApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizDTO>>> GetQuizzes()
         {
-            var quizzes = await _quizRepository.GetAll();
-            var quizDtos = quizzes.Adapt<List<QuizDTO>>();
-            return Ok(quizDtos);
+            try
+            {
+                var quizzes = await _quizRepository.GetAll();
+                var quizDtos = quizzes.Adapt<List<QuizDTO>>();
+                return Ok(quizDtos);
+
+            }
+            catch (Exception e)
+            {
+                // log error
+                return StatusCode(500, $"An error occurred: {e.Message}");
+            }
+
 
         }
 
@@ -193,7 +202,7 @@ namespace QuizApi.Controllers
                           .ToList())
                 ?? new Dictionary<int, List<int>>();
 
-            var questionsById = quiz.Questions.ToDictionary(q => q.QuestionId);
+            var questionsById = quiz.Questions.ToDictionary(q => q.Id);
 
             // Use Mapster to populate the bulk of the result DTO (title, metadata, etc.).
             var result = quiz.Adapt<QuizResultDTO>();
@@ -210,17 +219,17 @@ namespace QuizApi.Controllers
                 }
 
                 // Fetch the selected answer ids for this question (empty list if user skipped).
-                var selectedIds = responses.TryGetValue(question.QuestionId, out var ids)
+                var selectedIds = responses.TryGetValue(question.Id, out var ids)
                     ? ids
                     : new List<int>();
 
                 var correctAnswers = question.Answers?.Where(a => a.IsCorrect).ToList() ?? new List<Answer>();
-                var correctIds = correctAnswers.Select(a => a.AnswerId).ToHashSet();
+                var correctIds = correctAnswers.Select(a => a.Id).ToHashSet();
                 var selectedIdSet = selectedIds.ToHashSet();
 
                 // Translate ids to readable answer text for the response payload.
                 questionResult.SelectedAnswers = question.Answers?
-                    .Where(a => selectedIdSet.Contains(a.AnswerId))
+                    .Where(a => selectedIdSet.Contains(a.Id))
                     .Select(a => a.AnswerText)
                     .ToList() ?? new List<string>();
 
