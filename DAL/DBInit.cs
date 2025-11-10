@@ -1,16 +1,21 @@
+using Microsoft.AspNetCore.Identity;
 using QuizApi.Models;
 
 namespace QuizApi.DAL;
 
 public static class DBInit
 {
-    public static void Seed(IApplicationBuilder app)
+    public static async Task Seed(IApplicationBuilder app)
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
         QuizDbContext context = serviceScope.ServiceProvider.GetRequiredService<QuizDbContext>();
+        var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
 
+        var admin = await userManager.FindByNameAsync("admin");
+
+        // Seed initial quizzes if none exist
         if (!context.Quizzes.Any())
         {
             var quizzes = new List<Quiz>
@@ -20,6 +25,7 @@ public static class DBInit
                 Title = "C# Fundamentals",
                 Description = "Test your knowledge of C# basics",
                 TotalQuestions = 2,
+                OwnerId = admin.Id,
                 Questions = new List<Question>
                 {
                     new Question
@@ -51,6 +57,7 @@ public static class DBInit
                 Title = "ASP.NET MVC Basics",
                 Description = "Questions about ASP.NET MVC framework",
                 TotalQuestions = 1,
+                OwnerId = admin.Id,
                 Questions = new List<Question>
                 {
                     new Question
