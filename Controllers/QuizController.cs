@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -19,14 +19,12 @@ namespace QuizApi.Controllers
     [ApiController]
     public class QuizController : ControllerBase
     {
-        private readonly QuizDbContext _context;
         private readonly IQuizRepository _quizRepository;
         private readonly ILogger<QuizController> _logger;
 
 
-        public QuizController(QuizDbContext context, IQuizRepository quizRepository, ILogger<QuizController> logger)
+        public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger)
         {
-            _context = context;
             _quizRepository = quizRepository;
             _logger = logger;
         }
@@ -166,6 +164,83 @@ namespace QuizApi.Controllers
             await _quizRepository.Delete(id);
 
             return NoContent();
+        }
+
+        [HttpPost("submit")]
+        public async Task<IActionResult> Submit(SubmitQuizDTO model)
+        {
+            // Basic validation to ensure we have a quiz id to work with.
+            if (model == null || model.QuizId <= 0)
+            {
+                return BadRequest("Invalid submission");
+            }
+
+            // Load quiz including questions and answers so we can score the submission.
+            var quiz = await _quizRepository.GetQuizById(model.QuizId);
+            if (quiz?.Questions == null || quiz.Questions.Count == 0)
+            {
+                return NotFound();
+            }
+
+            // Flatten responses so that each question maps to a distinct set of selected answer ids.
+            var responses = model.Responses?
+                .GroupBy(r => r.QuestionId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.SelectMany(r => r.SelectedAnswerIds ?? new List<int>())
+                          .Where(id => id > 0)
+                          .Distinct()
+                          .ToList())
+                ?? new Dictionary<int, List<int>>();
+
+            var questionsById = quiz.Questions.ToDictionary(q => q.QuestionId);
+
+            // Use Mapster to populate the bulk of the result DTO (title, metadata, etc.).
+            var result = quiz.Adapt<QuizResultDTO>();
+            // Ensure we have mutable collections and reset scoring counters before we evaluate.
+            result.QuestionResults = result.QuestionResults?.ToList() ?? new List<QuestionResultDTO>();
+            result.QuestionsCorrect = 0;
+            result.TotalScore = 0;
+
+            foreach (var questionResult in result.QuestionResults)
+            {
+                if (!questionsById.TryGetValue(questionResult.QuestionId, out var question))
+                {
+                    continue;
+                }
+
+                // Fetch the selected answer ids for this question (empty list if user skipped).
+                var selectedIds = responses.TryGetValue(question.QuestionId, out var ids)
+                    ? ids
+                    : new List<int>();
+
+                var correctAnswers = question.Answers?.Where(a => a.IsCorrect).ToList() ?? new List<Answer>();
+                var correctIds = correctAnswers.Select(a => a.AnswerId).ToHashSet();
+                var selectedIdSet = selectedIds.ToHashSet();
+
+                // Translate ids to readable answer text for the response payload.
+                questionResult.SelectedAnswers = question.Answers?
+                    .Where(a => selectedIdSet.Contains(a.AnswerId))
+                    .Select(a => a.AnswerText)
+                    .ToList() ?? new List<string>();
+
+                // Mark the question as correct only when the selection exactly matches the correct answer set.
+                questionResult.IsCorrect = selectedIdSet.Count > 0 && correctIds.SetEquals(selectedIdSet);
+                // Include the list of correct answers so the client can display what the user missed.
+                questionResult.CorrectAnswers = correctAnswers.Select(a => a.AnswerText).ToList();
+
+                if (questionResult.IsCorrect)
+                {
+                    result.QuestionsCorrect += 1;
+                    result.TotalScore += question.Points;
+                }
+            }
+
+            // Update aggregate fields after iterating all questions to keep the DTO consistent.
+            result.TotalQuestions = result.QuestionResults.Count;
+            result.MaxScore = quiz.Questions.Sum(q => q.Points);
+
+            return Ok(result);
         }
 
         private async Task<bool> QuizExists(int id)

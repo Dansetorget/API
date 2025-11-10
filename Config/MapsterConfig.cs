@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Mapster;
 using QuizApi.DTOs;
 using QuizApi.Models;
@@ -38,6 +40,25 @@ public static class MapsterConfig
         TypeAdapterConfig<AnswerDTO, Answer>
             .NewConfig()
             .Map(dest => dest.AnswerId, src => src.Id);
+
+        // Quiz result mappings
+        TypeAdapterConfig<Quiz, QuizResultDTO>
+            .NewConfig()
+            .Map(dest => dest.QuizId, src => src.QuizId)
+            .Map(dest => dest.QuizTitle, src => src.Title)
+            .Map(dest => dest.TotalQuestions, src => src.Questions == null ? 0 : src.Questions.Count)
+            .Map(dest => dest.MaxScore, src => src.Questions == null ? 0 : src.Questions.Sum(q => q.Points))
+            .Map(dest => dest.QuestionResults, src => src.Questions ?? new List<Question>());
+
+        TypeAdapterConfig<Question, QuestionResultDTO>
+            .NewConfig()
+            .Map(dest => dest.QuestionId, src => src.QuestionId)
+            .Map(dest => dest.QuestionText, src => src.QuestionText)
+            .Map(dest => dest.Points, src => src.Points)
+            .Map(dest => dest.CorrectAnswers,
+                src => src.Answers != null
+                    ? src.Answers.Where(a => a.IsCorrect).Select(a => a.AnswerText).ToList()
+                    : new List<string>());
 
         // Ignore null values when updating
         TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);
