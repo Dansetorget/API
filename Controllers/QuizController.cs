@@ -166,8 +166,7 @@ namespace QuizApi.Controllers
             return NoContent();
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost("submit")]
         public async Task<IActionResult> Submit(SubmitQuizDTO model)
         {
             // Basic validation to ensure we have a quiz id to work with.
