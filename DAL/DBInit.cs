@@ -10,10 +10,33 @@ public static class DBInit
         using var serviceScope = app.ApplicationServices.CreateScope();
         QuizDbContext context = serviceScope.ServiceProvider.GetRequiredService<QuizDbContext>();
         var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
+        var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
 
         var admin = await userManager.FindByNameAsync("admin");
+        if (admin == null)
+        {
+            admin = new AuthUser
+            {
+                UserName = "admin",
+                Email = "dansetorget@gmail.com"
+            };
+
+            var createResult = await userManager.CreateAsync(admin, "Dansetorget123!");
+            if (!createResult.Succeeded)
+            {
+                throw new InvalidOperationException("Failed to create admin user for seeding quizzes.");
+            }
+        }
+        if (!await roleManager.RoleExistsAsync("Admin"))
+        {
+            await roleManager.CreateAsync(new IdentityRole("Admin")); // Create Admin role if it doesn't exist
+        }
+        if (!await userManager.IsInRoleAsync(admin, "Admin"))
+        {
+            await userManager.AddToRoleAsync(admin, "Admin"); // Assign admin user to Admin role if not already assigned
+        }
 
         // Seed initial quizzes if none exist
         if (!context.Quizzes.Any())

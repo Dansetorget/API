@@ -59,6 +59,7 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration["ConnectionStrings:AuthDbContextConnection"]));
 
 builder.Services.AddIdentity<AuthUser, IdentityRole>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AuthDbContext>()
     .AddDefaultTokenProviders();
 
@@ -149,7 +150,7 @@ var app = builder.Build();
 // ===== Development Configuration =====
 if (app.Environment.IsDevelopment())
 {
-    DBInit.Seed(app);
+    await DBInit.Seed(app);
     app.UseSwagger();
     app.UseSwaggerUI();
 }
