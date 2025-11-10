@@ -8,8 +8,19 @@ public static class DBInit
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
         QuizDbContext context = serviceScope.ServiceProvider.GetRequiredService<QuizDbContext>();
+        AuthDbContext authContext = serviceScope.ServiceProvider.GetRequiredService<AuthDbContext>();
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
+
+        if (!authContext.Users.Any())
+        {
+            new AuthUser
+            {
+                UserName = "testbruker"
+
+            };
+        }
+
 
         if (!context.Quizzes.Any())
         {
