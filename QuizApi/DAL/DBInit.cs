@@ -7,30 +7,40 @@ namespace QuizApi.DAL;
 
 public static class DBInit
 {
-    public static void Seed(IApplicationBuilder app)
+    public static async Task Seed(IApplicationBuilder app)
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
         QuizDbContext context = serviceScope.ServiceProvider.GetRequiredService<QuizDbContext>();
         var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
+        var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         context.Database.EnsureDeleted();
         context.Database.EnsureCreated();
 
-        var ownerUser = userManager.FindByNameAsync("testbruker").GetAwaiter().GetResult();
-        if (ownerUser == null)
+        var admin = await userManager.FindByNameAsync("admin");
+        if (admin == null)
         {
-            ownerUser = new AuthUser
+            admin = new AuthUser
             {
-                UserName = "testbruker",
-                Email = "seeduser@example.com"
+                UserName = "admin",
+                Email = "dansetorget@gmail.com"
             };
 
-            var createResult = userManager.CreateAsync(ownerUser, "SeedUser123!").GetAwaiter().GetResult();
+            var createResult = await userManager.CreateAsync(admin, "Dansetorget123!");
             if (!createResult.Succeeded)
             {
-                throw new InvalidOperationException($"Unable to create seed user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                throw new InvalidOperationException("Failed to create admin user for seeding quizzes.");
             }
         }
+        if (!await roleManager.RoleExistsAsync("Admin"))
+        {
+            await roleManager.CreateAsync(new IdentityRole("Admin")); // Create Admin role if it doesn't exist
+        }
+        if (!await userManager.IsInRoleAsync(admin, "Admin"))
+        {
+            await userManager.AddToRoleAsync(admin, "Admin"); // Assign admin user to Admin role if not already assigned
+        }
 
+        // Seed initial quizzes if none exist
         if (!context.Quizzes.Any())
         {
             var quizzes = new List<Quiz>
@@ -40,7 +50,7 @@ public static class DBInit
                 Title = "C# Fundamentals",
                 Description = "Test your knowledge of C# basics",
                 TotalQuestions = 2,
-                OwnerId = ownerUser.Id,
+                OwnerId = admin.Id,
                 Questions = new List<Question>
                 {
                     new Question
@@ -73,7 +83,7 @@ public static class DBInit
                 Title = "ASP.NET MVC Basics",
                 Description = "Questions about ASP.NET MVC framework",
                 TotalQuestions = 1,
-                OwnerId = ownerUser.Id,
+                OwnerId = admin.Id,
                 Questions = new List<Question>
                 {
                     new Question

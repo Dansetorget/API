@@ -59,6 +59,7 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration["ConnectionStrings:AuthDbContextConnection"]));
 
 builder.Services.AddIdentity<AuthUser, IdentityRole>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AuthDbContext>()
     .AddDefaultTokenProviders();
 
@@ -149,7 +150,7 @@ var app = builder.Build();
 // ===== Development Configuration =====
 if (app.Environment.IsDevelopment())
 {
-    DBInit.Seed(app);
+    await DBInit.Seed(app);
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -169,8 +170,8 @@ using (var scope = app.Services.CreateScope())
     var admin = await userManager.FindByNameAsync("admin");
     if (admin == null)
     {
-        admin = new AuthUser { UserName = "admin", Email = "admin@example.com" };
-        await userManager.CreateAsync(admin, "Admin123!");
+        admin = new AuthUser { UserName = "admin", Email = "dansetorget@gmail.com" };
+        await userManager.CreateAsync(admin, "Dansetorget123!");
         await userManager.AddToRoleAsync(admin, "Admin");
     }
 }
