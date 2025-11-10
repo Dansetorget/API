@@ -2,7 +2,7 @@ namespace QuizApi.Models;
 
 public class Question
 {
-    public int QuestionId { get; set; }
+    public int Id { get; set; }
     public string QuestionText { get; set; } = string.Empty;
     public int Points { get; set; }
 

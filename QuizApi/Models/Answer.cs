@@ -2,7 +2,7 @@ namespace QuizApi.Models;
 
 public class Answer
 {
-    public int AnswerId { get; set; }
+    public int Id { get; set; }
     public string AnswerText { get; set; } = string.Empty;
     public bool IsCorrect { get; set; }
 
