@@ -32,6 +32,7 @@ namespace QuizApi.Controllers
         }
 
         // GET: api/Quiz
+        // Returns all quizzes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<QuizDTO>>> GetQuizzes()
         {
@@ -42,7 +43,7 @@ namespace QuizApi.Controllers
         }
 
         // GET: api/Quiz/5
-        // Use this to take a specific quiz
+        // Returns a specific quiz
         [HttpGet("{id}")]
         public async Task<ActionResult<Quiz>> GetQuiz(int id)
         {
@@ -59,8 +60,7 @@ namespace QuizApi.Controllers
         }
 
         // Patch: api/Quiz/5
-        // For å bruke denne metoden, hent først en quiz med GetQuiz(int id) inn i et form
-        // Bruk så denne ved å trykke på Bekreft-knappen.
+        // Update a quiz. To use it, first fetch a quiz with GetQuiz(int id) into a form. Then use this by clicking the Confirm button.
         [Authorize] // Only user who have created the quiz can update it
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateQuiz(int id, QuizDTO quizDto)
@@ -116,6 +116,7 @@ namespace QuizApi.Controllers
         }
 
         // POST: api/Quiz
+        // Creates a new quiz
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize] // Only logged in users can create quizzes
         [HttpPost]
@@ -142,6 +143,7 @@ namespace QuizApi.Controllers
         }
 
         // DELETE: api/Quiz/5
+        // Delete a specific quiz
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteQuiz(int id)
@@ -173,7 +175,28 @@ namespace QuizApi.Controllers
             return await _quizRepository.GetQuizById(id) != null;
         }
 
+        // GET: api/Quiz/owner/{ownerId}
+        // Returns all quizzes that belong to a given owner.
+        [Authorize]
+        [HttpGet("owner/{ownerId}")]
+        public async Task<ActionResult<List<Quiz>>> GetQuizzesByOwner(string ownerId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Brukeridentitet mangler.");
+            }
 
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && !string.Equals(ownerId, userId, StringComparison.Ordinal))
+            {
+                return Forbid(); // Forbid access if not admin and userid != ownerId
+            }
+
+            var quizzes = await _quizRepository.GetByOwnerId(ownerId); // Fetch quizzes by ownerId
+            var quizDtos = quizzes.Adapt<List<QuizDTO>>();
+            return Ok(quizDtos);
+        }
 
     }
 }

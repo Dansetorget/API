@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.Models;
 
@@ -43,6 +44,22 @@ public class QuizRepository : IQuizRepository
         catch (Exception)
         {
             _logger.LogError("[QuizRepository] GetQuizById: Error retrieving quiz with ID {QuizId:0000}", id);
+            return null;
+        }
+    }
+    public async Task<IEnumerable<Quiz>?> GetByOwnerId(string ownerId)
+    {
+        try
+        {
+            return await _db.Quizzes
+                .Where(q => q.OwnerId == ownerId)
+                .Include(q => q.Questions!)
+                .ThenInclude(q => q.Answers)
+                .ToListAsync();
+        }
+        catch (Exception)
+        {
+            _logger.LogError("[QuizRepository] GetByOwnerId: Error retrieving quizzes for owner {OwnerId}", ownerId);
             return null;
         }
     }
