@@ -74,7 +74,7 @@ namespace QuizApi.Controllers
 
             var token = await GenerateJwtTokenAsync(user);
             _logger.LogInformation("[AuthController] Login success for {Username}", loginDto.Username);
-            return Ok(new { Token = token });
+            return Ok(new { Token = token }); // Return the JWT token to the client on successful login
 
         }
 
