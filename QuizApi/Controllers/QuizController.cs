@@ -179,7 +179,8 @@ namespace QuizApi.Controllers
 
             return NoContent();
         }
-
+        // POST: api/Quiz/submit
+        // Submits answers for a quiz and returns the result
         [HttpPost("submit")]
         public async Task<IActionResult> Submit(SubmitQuizDTO model)
         {
