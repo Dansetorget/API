@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
@@ -20,12 +21,14 @@ namespace QuizApi.Controllers
     {
         private readonly IQuizRepository _quizRepository;
         private readonly ILogger<QuizController> _logger;
+        private readonly UserManager<AuthUser> _userManager;
 
 
-        public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger)
+        public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger, UserManager<AuthUser> userManager)
         {
             _quizRepository = quizRepository;
             _logger = logger;
+            _userManager = userManager;
         }
 
         // GET: api/Quiz
@@ -127,27 +130,29 @@ namespace QuizApi.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize] // Only logged in users can create quizzes
         [HttpPost]
-        public async Task<ActionResult<Quiz>> CreateQuiz(QuizDTO quizDto)
+        public async Task<ActionResult<QuizDTO>> CreateQuiz(CreateQuizDTO createQuizDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID from the JWT token
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("Brukeridentitet mangler.");
+                return Unauthorized("User missing.");
             }
 
-            var quiz = quizDto.Adapt<Quiz>();
+            var quiz = createQuizDto.Adapt<Quiz>();
             quiz.OwnerId = userId; // Set the owner of the quiz to the logged-in user
 
-            var createdQuiz = await _quizRepository.Create(quiz);
-            if (!createdQuiz)
+            var created = await _quizRepository.Create(quiz);
+            if (!created)
             {
                 // Log error
                 return StatusCode(500, "Failed to create quiz");
             }
 
-            var createdQuizDto = createdQuiz.Adapt<QuizDTO>();
-            return CreatedAtAction(nameof(GetQuiz), new { id = createdQuizDto.Id }, createdQuizDto);
+            // EF sets the generated Ids on the tracked entity after SaveChanges
+            var createdQuizDto = quiz.Adapt<QuizDTO>();
+            return CreatedAtAction(nameof(GetQuiz), new { id = quiz.Id }, createdQuizDto);
         }
+
 
         // DELETE: api/Quiz/5
         // Delete a specific quiz
@@ -176,7 +181,8 @@ namespace QuizApi.Controllers
 
             return NoContent();
         }
-
+        // POST: api/Quiz/submit
+        // Submits answers for a quiz and returns the result
         [HttpPost("submit")]
         public async Task<IActionResult> Submit(SubmitQuizDTO model)
         {
@@ -251,6 +257,43 @@ namespace QuizApi.Controllers
             result.TotalQuestions = result.QuestionResults.Count;
             result.MaxScore = quiz.Questions.Sum(q => q.Points);
 
+            // Update streak for logged in user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    var today = DateTime.UtcNow.Date;
+                    if (user.LastQuizDate == null) // First time taking a quiz
+                    {
+                        user.Streak = 1;
+                    }
+                    else
+                    {
+                        var lastDate = user.LastQuizDate.Value.Date;
+                        if (lastDate == today) // Already taken a quiz today
+                        {
+                            // Do nothing
+                        }
+                        else if (lastDate == today.AddDays(-1)) // Took a quiz yesterday
+                        {
+                            user.Streak += 1; // Increase streak
+                        }
+                        else
+                        {
+                            user.Streak = 1; // Missed one or more days
+                        }
+                    }
+                    user.LastQuizDate = today;
+
+                    var updateResult = await _userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        _logger.LogWarning("Failed to update user streak for user {UserId}", userId);
+                    }
+                }
+            }
             return Ok(result);
         }
 
