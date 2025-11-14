@@ -8,6 +8,7 @@
 **/APILogs
 
 QuizDatabase.db
+AuthDatabase.db
 QuizDatabase.db-wal
 QuizDatabase.db-shm
 
