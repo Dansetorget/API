@@ -1,7 +1,6 @@
 # This workflow will build, test and promote to main if all succeed
 
-name: Build, Test, and Promote to Main (.NET 8) backup
-
+name: Build, Test, and Promote to Main (.NET 8)
 on:
   push:
     branches: ["develop"] # Trigger only when develop is updated
