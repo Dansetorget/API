@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using QuizApi.DTOs;
 using QuizApi.Models;
-using Microsoft.AspNetCore.Identity;
 
 namespace QuizApi.Controllers
 {

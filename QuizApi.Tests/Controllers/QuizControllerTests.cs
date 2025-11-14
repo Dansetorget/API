@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using QuizApi.Controllers;
 using QuizApi.DAL;
@@ -20,7 +21,23 @@ public class QuizControllerTests
     {
         mockRepo ??= new Mock<IQuizRepository>();
         var mockLogger = new Mock<ILogger<QuizController>>();
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object);
+
+        // Mock UserManager
+        var store = new Mock<IUserStore<AuthUser>>();
+
+        var mockUserManager = new Mock<UserManager<AuthUser>>(
+            store.Object,
+            Options.Create(new IdentityOptions()),   // IOptions<IdentityOptions>
+            new Mock<IPasswordHasher<AuthUser>>().Object,
+            new IUserValidator<AuthUser>[0],
+            new IPasswordValidator<AuthUser>[0],
+            new UpperInvariantLookupNormalizer(),
+            new IdentityErrorDescriber(),
+            null!,  // IServiceProvider
+            new Mock<ILogger<UserManager<AuthUser>>>().Object
+        );
+
+        var controller = new QuizController(mockRepo.Object, mockLogger.Object, mockUserManager.Object);
 
         // Mock authenticated user
         var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
@@ -191,8 +208,8 @@ public class QuizControllerTests
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
-        var mockLogger = new Mock<ILogger<QuizController>>();
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object);
+        var controller = CreateController(mockRepo);
+
 
         var quiz = new Quiz { Id = 42, Title = "History" };
         mockRepo.Setup(repo => repo.GetQuizById(42)).ReturnsAsync(quiz);
@@ -218,8 +235,8 @@ public class QuizControllerTests
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
-        var mockLogger = new Mock<ILogger<QuizController>>();
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object);
+        var controller = CreateController(mockRepo);
+
 
         mockRepo.Setup(repo => repo.GetQuizById(42)).ReturnsAsync((Quiz?)null); // simulate not found
 
