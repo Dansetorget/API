@@ -2,53 +2,56 @@ name: Build, Test, and Promote to Main (.NET 8)
 
 on:
   push:
-    branches: ["develop"] # Trigger only when develop is updated
+    branches: ["develop"]
   pull_request:
     branches: ["develop"]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repository
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed for merges
-          persist-credentials: true # Allow pushing back
+          fetch-depth: 0
 
-      # 2. Setup .NET SDK
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      # 3. Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
 
-      # 4. Build the project
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      # 5. Run tests
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
 
-      # 6. Promote develop → main (only if previous steps succeeded)
-      # - name: Promote develop → main
-      #   if: success()
-      #   run: |
-      #     # Configure Git user
-      #     git config user.name "github-actions"
-      #     git config user.email "github-actions@github.com"
+  promote:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: success()
 
-      #     # Fetch and checkout main
-      #     git fetch origin main
-      #     git checkout -B main origin/main
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      #     # Merge develop into main
-      #     git merge origin/develop --no-ff --no-edit
+      - name: Create Pull Request to main
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-      #     # Push the merge
-      #     git push origin main
+          git checkout -b promote/develop-to-main-${{ github.sha }}
+          git push origin promote/develop-to-main-${{ github.sha }}
+
+          gh pr create \
+            --base main \
+            --head promote/develop-to-main-${{ github.sha }} \
+            --title "Promote: develop → main (${{ github.sha }})" \
+            --body "Automatic promotion from develop to main"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
