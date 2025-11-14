@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using QuizApi.DTOs;
 using QuizApi.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace QuizApi.Controllers
 {
@@ -20,12 +21,14 @@ namespace QuizApi.Controllers
     {
         private readonly IQuizRepository _quizRepository;
         private readonly ILogger<QuizController> _logger;
+        private readonly UserManager<AuthUser> _userManager;
 
 
-        public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger)
+        public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger, UserManager<AuthUser> userManager)
         {
             _quizRepository = quizRepository;
             _logger = logger;
+            _userManager = userManager;
         }
 
         // GET: api/Quiz
@@ -177,7 +180,8 @@ namespace QuizApi.Controllers
 
             return NoContent();
         }
-
+        // POST: api/Quiz/submit
+        // Submits answers for a quiz and returns the result
         [HttpPost("submit")]
         public async Task<IActionResult> Submit(SubmitQuizDTO model)
         {
@@ -252,6 +256,43 @@ namespace QuizApi.Controllers
             result.TotalQuestions = result.QuestionResults.Count;
             result.MaxScore = quiz.Questions.Sum(q => q.Points);
 
+            // Update streak for logged in user
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    var today = DateTime.UtcNow.Date;
+                    if (user.LastQuizDate == null) // First time taking a quiz
+                    {
+                        user.Streak = 1;
+                    }
+                    else
+                    {
+                        var lastDate = user.LastQuizDate.Value.Date;
+                        if (lastDate == today) // Already taken a quiz today
+                        {
+                            // Do nothing
+                        }
+                        else if (lastDate == today.AddDays(-1)) // Took a quiz yesterday
+                        {
+                            user.Streak += 1; // Increase streak
+                        }
+                        else
+                        {
+                            user.Streak = 1; // Missed one or more days
+                        }
+                    }
+                    user.LastQuizDate = today;
+
+                    var updateResult = await _userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        _logger.LogWarning("Failed to update user streak for user {UserId}", userId);
+                    }
+                }
+            }
             return Ok(result);
         }
 

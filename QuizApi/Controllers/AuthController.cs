@@ -16,7 +16,7 @@ namespace QuizApi.Controllers
     {
         private readonly UserManager<AuthUser> _userManager; // Handles critical tasks like password hashing, salting, and validation
         private readonly SignInManager<AuthUser> _signInManager; // Session management and security features 
-        private readonly IConfiguration _configuration; // Secure access to your application's settings, like the JWT secret key.
+        private readonly IConfiguration _configuration; // Secure access to the application's settings, like the JWT secret key.
         private readonly ILogger<AuthController> _logger; // Writing log messages
 
         public AuthController(UserManager<AuthUser> userManager, SignInManager<AuthUser> signInManager, IConfiguration configuration, ILogger<AuthController> logger)
@@ -133,6 +133,33 @@ namespace QuizApi.Controllers
 
             _logger.LogInformation("[AuthAPIController] JWT token created for {@username}", user.UserName);
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // Endpoint for fetching user information
+        // Fetch info only for the logged in user, but can be extended to fetch any user's info by ID or username
+        [Authorize]
+        [HttpGet("userinfo")]
+        public async Task<IActionResult> GetUserInfo()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the user ID from the JWT claims
+            if (userId == null)
+            {
+                return NotFound("No logged-in user found.");
+            }
+            var user = await _userManager.FindByIdAsync(userId); // Find the user by ID
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+            var roles = await _userManager.GetRolesAsync(user); // Get the user's roles
+            var userInfo = new UserInfoDTO
+            {
+                Username = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                Roles = roles.ToList(),
+                Streak = user.Streak
+            };
+            return Ok(userInfo);
         }
     }
 }
