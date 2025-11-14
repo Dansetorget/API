@@ -2,9 +2,9 @@ name: Build, Test, and Promote to Main (.NET 8)
 
 on:
   push:
-    branches: [ "develop" ] # Trigger only when develop is updated
-  pull_request: 
-    branches: [ "develop" ]
+    branches: ["develop"] # Trigger only when develop is updated
+  pull_request:
+    branches: ["develop"]
 
 jobs:
   build:
@@ -36,19 +36,19 @@ jobs:
         run: dotnet test --configuration Release --no-build --verbosity normal
 
       # 6. Promote develop → main (only if previous steps succeeded)
-      - name: Promote develop → main
-        if: success()
-        run: |
-          # Configure Git user
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+      # - name: Promote develop → main
+      #   if: success()
+      #   run: |
+      #     # Configure Git user
+      #     git config user.name "github-actions"
+      #     git config user.email "github-actions@github.com"
 
-          # Fetch and checkout main
-          git fetch origin main
-          git checkout -B main origin/main
+      #     # Fetch and checkout main
+      #     git fetch origin main
+      #     git checkout -B main origin/main
 
-          # Merge develop into main
-          git merge origin/develop --no-ff --no-edit
+      #     # Merge develop into main
+      #     git merge origin/develop --no-ff --no-edit
 
-          # Push the merge
-          git push origin main
+      #     # Push the merge
+      #     git push origin main
