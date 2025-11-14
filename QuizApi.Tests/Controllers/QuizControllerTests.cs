@@ -203,7 +203,7 @@ public class QuizControllerTests
 
     // Negative test for CreateQuiz
     [Fact]
-    public async Task CreateQuiz_ShouldReturnBadRequest_WhenRepositoryFailsToCreateQuiz()
+    public async Task CreateQuiz_ShouldReturn500_WhenReposFails()
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
@@ -221,14 +221,13 @@ public class QuizControllerTests
         var result = await controller.CreateQuiz(quizDto);
 
         // Assert
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        var message = Assert.IsType<string>(badRequestResult.Value);
-        Assert.Equal("Failed to create quiz.", message);
+        var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusCodeResult.StatusCode);
+        Assert.Equal("Failed to create quiz", statusCodeResult.Value);
 
-        // Verify that repository Create was called exactly once
+        // Repo should have been called once
         mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
     }
-
 
 
     [Fact]
