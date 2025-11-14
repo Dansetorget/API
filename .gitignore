@@ -7,9 +7,9 @@
 **/Logs
 **/APILogs
 
-QuizDatabase.db
-AuthDatabase.db
-QuizDatabase.db-wal
-QuizDatabase.db-shm
+**/QuizDatabase.db
+**/AuthDatabase.db
+**/QuizDatabase.db-wal
+**/QuizDatabase.db-shm
 
 .fake
