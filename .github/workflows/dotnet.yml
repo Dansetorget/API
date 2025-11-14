@@ -3,6 +3,8 @@ name: Build, Test, and Promote to Main (.NET 8)
 on:
   push:
     branches: ["develop"] # Trigger only when develop is updated
+  pull_request: 
+    branches: ["develop"]
 
 jobs:
   build:
