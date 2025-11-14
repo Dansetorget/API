@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.DAL;
 using QuizApi.DTOs;
 using QuizApi.Models;
-using Microsoft.AspNetCore.Identity;
 
 namespace QuizApi.Controllers
 {
@@ -130,27 +130,27 @@ namespace QuizApi.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize] // Only logged in users can create quizzes
         [HttpPost]
-        public async Task<ActionResult<QuizDTO>> CreateQuiz(QuizDTO quizDto)
+        public async Task<ActionResult<QuizDTO>> CreateQuiz(CreateQuizDTO createQuizDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID from the JWT token
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("Brukeridentitet mangler.");
+                return Unauthorized("User missing.");
             }
 
-            var quiz = quizDto.Adapt<Quiz>();
+            var quiz = createQuizDto.Adapt<Quiz>();
             quiz.OwnerId = userId; // Set the owner of the quiz to the logged-in user
 
-            var createdQuiz = await _quizRepository.Create(quiz);
-            if (!createdQuiz)
+            var created = await _quizRepository.Create(quiz);
+            if (!created)
             {
                 // Log error
                 return StatusCode(500, "Failed to create quiz");
             }
 
-            // Map Quiz -> QuizDTO for response
+            // EF sets the generated Ids on the tracked entity after SaveChanges
             var createdQuizDto = quiz.Adapt<QuizDTO>();
-            return CreatedAtAction(nameof(GetQuiz), new { id = createdQuizDto.Id }, createdQuizDto);
+            return CreatedAtAction(nameof(GetQuiz), new { id = quiz.Id }, createdQuizDto);
         }
 
         // DELETE: api/Quiz/5
