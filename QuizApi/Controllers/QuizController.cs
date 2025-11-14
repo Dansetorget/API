@@ -127,7 +127,7 @@ namespace QuizApi.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize] // Only logged in users can create quizzes
         [HttpPost]
-        public async Task<ActionResult<Quiz>> CreateQuiz(QuizDTO quizDto)
+        public async Task<ActionResult<QuizDTO>> CreateQuiz(QuizDTO quizDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID from the JWT token
             if (string.IsNullOrEmpty(userId))
@@ -145,7 +145,8 @@ namespace QuizApi.Controllers
                 return StatusCode(500, "Failed to create quiz");
             }
 
-            var createdQuizDto = createdQuiz.Adapt<QuizDTO>();
+            // Map Quiz -> QuizDTO for response
+            var createdQuizDto = quiz.Adapt<QuizDTO>();
             return CreatedAtAction(nameof(GetQuiz), new { id = createdQuizDto.Id }, createdQuizDto);
         }
 
