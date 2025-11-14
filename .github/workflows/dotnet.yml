@@ -1,6 +1,5 @@
-# This workflow will build, test and promote to main if all succeed
-
 name: Build, Test, and Promote to Main (.NET 8)
+
 on:
   push:
     branches: ["develop"] # Trigger only when develop is updated
@@ -10,29 +9,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout the repository
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed to merge + push to main
+          fetch-depth: 0 # Needed for merges
+          persist-credentials: true # Allow pushing back
 
+      # 2. Setup .NET SDK
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
+      # 3. Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
+
+      # 4. Build the project
       - name: Build
         run: dotnet build --configuration Release --no-restore
+
+      # 5. Run tests
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
 
-      # Only runs if everything succeeded
+      # 6. Promote develop → main (only if previous steps succeeded)
       - name: Promote develop → main
         if: success()
         run: |
+          # Configure Git user
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git checkout main
+          # Fetch and checkout main
+          git fetch origin main
+          git checkout -B main origin/main
+
+          # Merge develop into main
           git merge origin/develop --no-ff --no-edit
+
+          # Push the merge
           git push origin main
