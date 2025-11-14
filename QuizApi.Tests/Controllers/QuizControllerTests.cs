@@ -201,6 +201,34 @@ public class QuizControllerTests
         Assert.Equal(quizDto.Title, capturedQuiz!.Title);
     }
 
+    // Negative test for CreateQuiz
+    [Fact]
+    public async Task CreateQuiz_ShouldReturnBadRequest_WhenRepositoryFailsToCreateQuiz()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        var quizDto = new QuizDTO
+        {
+            Title = "Invalid Quiz"
+        };
+
+        // Setup repo to return false indicating failure
+        mockRepo.Setup(r => r.Create(It.IsAny<Quiz>())).ReturnsAsync(false);
+
+        // Act
+        var result = await controller.CreateQuiz(quizDto);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        var message = Assert.IsType<string>(badRequestResult.Value);
+        Assert.Equal("Failed to create quiz.", message);
+
+        // Verify that repository Create was called exactly once
+        mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
+    }
+
 
 
     [Fact]
@@ -231,7 +259,7 @@ public class QuizControllerTests
 
 
     [Fact]
-    public async Task GetQuizById_GetQuizById_ShouldReturnNotFound_WhenQuizDoesNotExist()
+    public async Task GetQuizById_ShouldReturnNotFound_WhenQuizDoesNotExist()
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
