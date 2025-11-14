@@ -121,18 +121,18 @@ public class QuizControllerTests
         var mockLogger = new Mock<ILogger<QuizController>>();
         var controller = CreateController(mockRepo);
 
-        var quizDto = new QuizDTO
+        var quizDto = new CreateQuizDTO
         {
             Title = "Geography",
-            Questions = new List<QuestionDTO>
+            Questions = new List<CreateQuestionDTO>
         {
-            new QuestionDTO
+            new CreateQuestionDTO
             {
                 QuestionText = "What is the capital of France?",
-                Answers = new List<AnswerDTO>
+                Answers = new List<CreateAnswerDTO>
                 {
-                    new AnswerDTO { AnswerText = "Paris", IsCorrect = true },
-                    new AnswerDTO { AnswerText = "London", IsCorrect = false }
+                    new CreateAnswerDTO { AnswerText = "Paris", IsCorrect = true },
+                    new CreateAnswerDTO { AnswerText = "London", IsCorrect = false }
                 }
             }
         }
@@ -209,7 +209,7 @@ public class QuizControllerTests
         var mockRepo = new Mock<IQuizRepository>();
         var controller = CreateController(mockRepo);
 
-        var quizDto = new QuizDTO
+        var quizDto = new CreateQuizDTO
         {
             Title = "Invalid Quiz"
         };
