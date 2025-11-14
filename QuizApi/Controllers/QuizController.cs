@@ -153,6 +153,7 @@ namespace QuizApi.Controllers
             return CreatedAtAction(nameof(GetQuiz), new { id = quiz.Id }, createdQuizDto);
         }
 
+
         // DELETE: api/Quiz/5
         // Delete a specific quiz
         [Authorize]

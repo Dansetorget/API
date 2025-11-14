@@ -1,7 +1,10 @@
 using System.Security.Claims;
+using Mapster;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using QuizApi.Controllers;
 using QuizApi.DAL;
@@ -18,7 +21,23 @@ public class QuizControllerTests
     {
         mockRepo ??= new Mock<IQuizRepository>();
         var mockLogger = new Mock<ILogger<QuizController>>();
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object);
+
+        // Mock UserManager
+        var store = new Mock<IUserStore<AuthUser>>();
+
+        var mockUserManager = new Mock<UserManager<AuthUser>>(
+            store.Object,
+            Options.Create(new IdentityOptions()),   // IOptions<IdentityOptions>
+            new Mock<IPasswordHasher<AuthUser>>().Object,
+            new IUserValidator<AuthUser>[0],
+            new IPasswordValidator<AuthUser>[0],
+            new UpperInvariantLookupNormalizer(),
+            new IdentityErrorDescriber(),
+            null!,  // IServiceProvider
+            new Mock<ILogger<UserManager<AuthUser>>>().Object
+        );
+
+        var controller = new QuizController(mockRepo.Object, mockLogger.Object, mockUserManager.Object);
 
         // Mock authenticated user
         var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
@@ -182,6 +201,33 @@ public class QuizControllerTests
         Assert.Equal(quizDto.Title, capturedQuiz!.Title);
     }
 
+    // Negative test for CreateQuiz
+    [Fact]
+    public async Task CreateQuiz_ShouldReturn500_WhenReposFails()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        var quizDto = new QuizDTO
+        {
+            Title = "Invalid Quiz"
+        };
+
+        // Setup repo to return false indicating failure
+        mockRepo.Setup(r => r.Create(It.IsAny<Quiz>())).ReturnsAsync(false);
+
+        // Act
+        var result = await controller.CreateQuiz(quizDto);
+
+        // Assert
+        var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusCodeResult.StatusCode);
+        Assert.Equal("Failed to create quiz", statusCodeResult.Value);
+
+        // Repo should have been called once
+        mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
+    }
 
 
     [Fact]
@@ -189,8 +235,8 @@ public class QuizControllerTests
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
-        var mockLogger = new Mock<ILogger<QuizController>>();
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object);
+        var controller = CreateController(mockRepo);
+
 
         var quiz = new Quiz { Id = 42, Title = "History" };
         mockRepo.Setup(repo => repo.GetQuizById(42)).ReturnsAsync(quiz);
@@ -212,12 +258,12 @@ public class QuizControllerTests
 
 
     [Fact]
-    public async Task GetQuizById_GetQuizById_ShouldReturnNotFound_WhenQuizDoesNotExist()
+    public async Task GetQuizById_ShouldReturnNotFound_WhenQuizDoesNotExist()
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
-        var mockLogger = new Mock<ILogger<QuizController>>();
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object);
+        var controller = CreateController(mockRepo);
+
 
         mockRepo.Setup(repo => repo.GetQuizById(42)).ReturnsAsync((Quiz?)null); // simulate not found
 
