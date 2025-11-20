@@ -11,9 +11,11 @@ public class QuizDbContext : IdentityDbContext
         Database.EnsureCreated();
     }
 
+    public DbSet<AuthUser> AuthUsers { get; set; }
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<Question> Questions { get; set; }
     public DbSet<Answer> Answers { get; set; }
+    public DbSet<QuizAttempt> QuizAttempts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
