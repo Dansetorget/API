@@ -266,17 +266,19 @@ namespace QuizApi.Controllers
         }
 
 
-        // GET: api/Quiz/owner/{ownerId}
+        // GET: api/Quiz/owner/
         // Returns all quizzes that belong to a given owner.
         [Authorize]
-        [HttpGet("owner/{ownerId}")]
-        public async Task<ActionResult<List<Quiz>>> GetQuizzesByOwner(string ownerId)
+        [HttpGet("owner")]
+        public async Task<ActionResult<List<Quiz>>> GetQuizzesByOwner()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Brukeridentitet mangler.");
             }
+
+            var ownerId = userId; // For now, only allow fetching own quizzes
 
             var isAdmin = User.IsInRole("Admin");
             if (!isAdmin && !string.Equals(ownerId, userId, StringComparison.Ordinal))
