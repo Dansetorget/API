@@ -203,5 +203,36 @@ namespace QuizApi.Controllers
             return Ok(new { Message = "Password changed successfully" });
         }
 
+
+        // Delete user account
+        [Authorize]
+        [HttpDelete("deleteaccount")]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized("No logged-in user found.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("[AuthController] Account deletion failed for {Username}", user.UserName);
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", user.UserName);
+            return Ok(new { Message = "Account deleted successfully" });
+        }
     }
 }
