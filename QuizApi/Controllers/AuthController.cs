@@ -156,20 +156,14 @@ namespace QuizApi.Controllers
             var roles = await _userManager.GetRolesAsync(user); // Get the user's roles
 
             var userInfo = user.Adapt<UserInfoDTO>();
-            // var userInfo3 = new UserInfoDTO
-            // {
-            //     Username = user.UserName ?? string.Empty,
-            //     Email = user.Email ?? string.Empty,
-            //     Roles = roles.ToList(),
-            //     Streak = user.Streak,
-            //     CreatedAt = user.CreatedAt
-            // };
+            userInfo.Roles = roles.ToList();
+
             return Ok(userInfo);
         }
 
 
         // Endpoint for changing password
-        // Patch api/Auth/change-password
+        // Patch api/Auth/changepassword
         [Authorize]
         [HttpPatch("changepassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
