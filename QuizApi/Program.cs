@@ -61,12 +61,11 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlite(builder.Configuration["ConnectionStrings:AuthDbContextConnection"]));
+
 
 builder.Services.AddIdentity<AuthUser, IdentityRole>()
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AuthDbContext>()
+    .AddEntityFrameworkStores<QuizDbContext>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddCors(options =>

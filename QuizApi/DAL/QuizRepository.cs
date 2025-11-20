@@ -63,6 +63,29 @@ public class QuizRepository : IQuizRepository
             return null;
         }
     }
+
+
+    public async Task<bool> SaveQuizAttempt(QuizAttempt attempt)
+    {
+        try
+        {
+            await _db.QuizAttempts.AddAsync(attempt);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("[QuizRepository] Error saving quiz attempt. QuizId={QuizId} , Points={Points}, TimeTaken={TimeTaken}. Error message: {e}",
+                attempt.QuizId, attempt.Points, attempt.TimeTaken, e.Message);
+
+
+            // Show the inner exception, which often has the real cause
+            if (e.InnerException != null)
+                Console.WriteLine("Inner Exception: " + e.InnerException.Message);
+            return false;
+        }
+    }
+
     public async Task<bool> Create(Quiz quiz)
     {
         try
@@ -74,26 +97,6 @@ public class QuizRepository : IQuizRepository
         catch (Exception)
         {
             _logger.LogError("[QuizRepository] Create: Error creating a new quiz.");
-            return false;
-        }
-    }
-    public async Task<bool> AddQuestionToQuiz(Quiz quiz, Question question)
-    {
-        try
-        {
-            if (quiz.Questions == null)
-            {
-                quiz.Questions = new List<Question>();
-            }
-
-            quiz.Questions.Add(question);
-            _db.Quizzes.Update(quiz);
-            await _db.SaveChangesAsync();
-            return true;
-        }
-        catch (Exception)
-        {
-            _logger.LogError("[QuizRepository] AddQuestionToQuiz: Error adding question to quiz with ID {QuizId:0000}", quiz.Id);
             return false;
         }
     }

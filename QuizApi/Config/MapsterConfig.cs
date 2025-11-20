@@ -60,6 +60,10 @@ public static class MapsterConfig
                     ? src.Answers.Where(a => a.IsCorrect).Select(a => a.AnswerText).ToList()
                     : new List<string>());
 
+        TypeAdapterConfig<QuizAttemptDTO, QuizAttempt>
+            .NewConfig();
+
+
         // Ignore null values when updating
         TypeAdapterConfig.GlobalSettings.Default.IgnoreNullValues(true);
     }
