@@ -232,10 +232,7 @@ namespace QuizApi.Controllers
             }
 
             var attempt = model.Adapt<QuizAttempt>();
-            // Console.WriteLine($"Adapted attempt UserId: {attempt.UserId}");
-            // attempt.UserId = userId ?? attempt.UserId;
-            attempt.QuizId = model.QuizId;
-
+            attempt.UserId = userId!; // Set the UserId of the attempt to the logged-in user
 
 
             var saveSuccess = await _quizRepository.SaveQuizAttempt(attempt);
@@ -246,6 +243,26 @@ namespace QuizApi.Controllers
             }
 
             return Ok(new { message = "Quiz attempt saved successfully" });
+        }
+
+        [HttpGet("results/{quizId}")]
+        public async Task<IActionResult> GetQuizResults(int quizId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User missing.");
+            }
+
+            // Fetch quiz attempts for the given quizId and userId
+            var attempts = await _quizRepository.GetQuizAttempts(quizId, userId);
+            if (attempts == null)
+            {
+                return NotFound("No quiz attempts found for this quiz and user.");
+            }
+
+            var attemptDTOs = attempts.Adapt<List<QuizAttemptDTO>>();
+            return Ok(attemptDTOs);
         }
 
 

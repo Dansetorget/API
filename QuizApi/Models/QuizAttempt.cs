@@ -15,5 +15,5 @@ public class QuizAttempt
 
     // Navigation properties
     public virtual Quiz? Quiz { get; set; } = default;
-    //public virtual AuthUser? User { get; set; } = default;
+    public virtual AuthUser? User { get; set; } = default;
 }
