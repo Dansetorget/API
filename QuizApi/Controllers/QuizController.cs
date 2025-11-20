@@ -254,15 +254,22 @@ namespace QuizApi.Controllers
                 return Unauthorized("User missing.");
             }
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
+
             // Fetch quiz attempts for the given quizId and userId
             var attempts = await _quizRepository.GetQuizAttempts(quizId, userId);
-            if (attempts == null)
+            if (attempts == null || !attempts.Any())
             {
                 return NotFound("No quiz attempts found for this quiz and user.");
             }
 
-            var attemptDTOs = attempts.Adapt<List<QuizAttemptDTO>>();
-            return Ok(attemptDTOs);
+            var attemptDtos = attempts.Adapt<List<QuizAttemptDTO>>();
+
+            return Ok(new { user.UserName, attemptDtos });
         }
 
 
