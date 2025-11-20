@@ -229,7 +229,7 @@ public class QuizControllerTests
         mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
     }
 
-
+    // Test for read by id
     [Fact]
     public async Task GetQuizById_ShouldRetunOk_WhenQuizExists()
     {
@@ -256,7 +256,7 @@ public class QuizControllerTests
         mockRepo.Verify(repo => repo.GetQuizById(42), Times.Once);
     }
 
-
+    // Negative test for read by id
     [Fact]
     public async Task GetQuizById_ShouldReturnNotFound_WhenQuizDoesNotExist()
     {
@@ -281,6 +281,85 @@ public class QuizControllerTests
     }
 
 
+
+    // Test for update quiz
+    [Fact]
+    public async Task UpdateQuiz_ShouldReturnNoContent_WhenUpdateIsSuccessful()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        var quizDto = new QuizDTO
+        {
+            Id = 1,
+            Title = "Updated Quiz Title"
+        };
+
+        // Mock existing quiz returned from repository
+        var existingQuiz = new Quiz
+        {
+            Id = 1,
+            Title = "Old Title",
+            OwnerId = "1"
+        };
+
+        mockRepo.Setup(r => r.GetQuizById(1))
+                .ReturnsAsync(existingQuiz);
+
+        // Capture the Quiz entity passed to Update()
+        Quiz? capturedQuiz = null;
+
+        mockRepo.Setup(r => r.Update(It.IsAny<Quiz>()))
+                .Callback<Quiz>(q => capturedQuiz = q)
+                .ReturnsAsync(true);
+
+        // Act
+        var result = await controller.UpdateQuiz(1, quizDto);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+
+        // Verify Update was called exactly once
+        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Once);
+
+        // Check that the updated quiz contains the new values
+        Assert.NotNull(capturedQuiz);
+        Assert.Equal(1, capturedQuiz!.Id);
+        Assert.Equal("Updated Quiz Title", capturedQuiz.Title);
+    }
+
+    // Negative test for update quiz
+    [Fact]
+    public async Task UpdateQuiz_ShouldReturnForbid_WhenUserDoesNotOwnQuiz()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        var quizDto = new QuizDTO
+        {
+            Id = 1,
+            Title = "Updated Title"
+        };
+
+        // Quiz exists, but its OwnerId does NOT match authenticated user ("1")
+        mockRepo.Setup(r => r.GetQuizById(1))
+                .ReturnsAsync(new Quiz
+                {
+                    Id = 1,
+                    OwnerId = "999"   // <-- Not owned by the logged-in user
+                });
+
+        // Act
+        var result = await controller.UpdateQuiz(1, quizDto);
+
+        // Assert
+        Assert.IsType<ForbidResult>(result);
+
+        // Ensure Update() was never called
+        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
+    }
 
 
 }
