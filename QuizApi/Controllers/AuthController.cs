@@ -167,7 +167,7 @@ namespace QuizApi.Controllers
         // Endpoint for changing password
         // Patch api/Auth/change-password
         [Authorize]
-        [HttpPatch("change-password")]
+        [HttpPatch("changepassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
