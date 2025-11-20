@@ -9,5 +9,7 @@ namespace QuizApi.Models
         // Can add more custom properties, such as FirstName, LastName, etc.
         public int Streak { get; set; } = 0;
         public DateTime? LastQuizDate { get; set; }
+
+        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

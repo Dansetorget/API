@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -153,13 +154,16 @@ namespace QuizApi.Controllers
                 return NotFound("User not found.");
             }
             var roles = await _userManager.GetRolesAsync(user); // Get the user's roles
-            var userInfo = new UserInfoDTO
-            {
-                Username = user.UserName ?? string.Empty,
-                Email = user.Email ?? string.Empty,
-                Roles = roles.ToList(),
-                Streak = user.Streak
-            };
+
+            var userInfo = user.Adapt<UserInfoDTO>();
+            // var userInfo3 = new UserInfoDTO
+            // {
+            //     Username = user.UserName ?? string.Empty,
+            //     Email = user.Email ?? string.Empty,
+            //     Roles = roles.ToList(),
+            //     Streak = user.Streak,
+            //     CreatedAt = user.CreatedAt
+            // };
             return Ok(userInfo);
         }
 
