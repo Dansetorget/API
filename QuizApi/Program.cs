@@ -17,21 +17,26 @@ var connectionString = builder.Configuration.GetConnectionString("ItemDbContextC
 // (Add any configuration or logging setup here if needed)
 
 // Configures Swagger (OpenAPI) for API and enable JWT authentication within the Swagger UI
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Quiz API", Version = "v1" }); // Basic metadata
-    // API expects to receive authentication credentials as a JWT token in the Authorization header with the "Bearer " prefix
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
-        In = ParameterLocation.Header,
-        Description = "JWT Authorization header. Please enter a valid token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
+        Title = "Quiz API",
+        Version = "v1"
     });
-    // Apply the "Bearer" to all API endpoints. This adds the "Authorize" button to the Swagger UI, allowing you to enter a JWT token to test your protected endpoints
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+
+    // Add JWT Auth
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter: Bearer {your JWT token}"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -46,6 +51,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 
 
 // ===== Database Services =====
@@ -140,7 +146,6 @@ builder.Services.AddSession();// used for authentication and authorisation
 // ===== API Services =====
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // ===== Third-Party Services =====
 MapsterConfig.Configure();
