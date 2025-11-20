@@ -184,7 +184,7 @@ namespace QuizApi.Controllers
         // POST: api/Quiz/submit
         // Submits answers for a quiz and returns the result
         [HttpPost("submit")]
-        public async Task<IActionResult> Submit(SubmitQuizDTO model)
+        public async Task<IActionResult> SubmitQuizAttempt(QuizAttemptDTO model)
         {
             // Basic validation to ensure we have a quiz id to work with.
             if (model == null || model.QuizId <= 0)
@@ -192,73 +192,9 @@ namespace QuizApi.Controllers
                 return BadRequest("Invalid submission");
             }
 
-            // Load quiz including questions and answers so we can score the submission.
-            var quiz = await _quizRepository.GetQuizById(model.QuizId);
-            if (quiz?.Questions == null || quiz.Questions.Count == 0)
-            {
-                return NotFound();
-            }
-
-            // Flatten responses so that each question maps to a distinct set of selected answer ids.
-            var responses = model.Responses?
-                .GroupBy(r => r.QuestionId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.SelectMany(r => r.SelectedAnswerIds ?? new List<int>())
-                          .Where(id => id > 0)
-                          .Distinct()
-                          .ToList())
-                ?? new Dictionary<int, List<int>>();
-
-            var questionsById = quiz.Questions.ToDictionary(q => q.Id);
-
-            // Use Mapster to populate the bulk of the result DTO (title, metadata, etc.).
-            var result = quiz.Adapt<QuizResultDTO>();
-            // Ensure we have mutable collections and reset scoring counters before we evaluate.
-            result.QuestionResults = result.QuestionResults?.ToList() ?? new List<QuestionResultDTO>();
-            result.QuestionsCorrect = 0;
-            result.TotalScore = 0;
-
-            foreach (var questionResult in result.QuestionResults)
-            {
-                if (!questionsById.TryGetValue(questionResult.QuestionId, out var question))
-                {
-                    continue;
-                }
-
-                // Fetch the selected answer ids for this question (empty list if user skipped).
-                var selectedIds = responses.TryGetValue(question.Id, out var ids)
-                    ? ids
-                    : new List<int>();
-
-                var correctAnswers = question.Answers?.Where(a => a.IsCorrect).ToList() ?? new List<Answer>();
-                var correctIds = correctAnswers.Select(a => a.Id).ToHashSet();
-                var selectedIdSet = selectedIds.ToHashSet();
-
-                // Translate ids to readable answer text for the response payload.
-                questionResult.SelectedAnswers = question.Answers?
-                    .Where(a => selectedIdSet.Contains(a.Id))
-                    .Select(a => a.AnswerText)
-                    .ToList() ?? new List<string>();
-
-                // Mark the question as correct only when the selection exactly matches the correct answer set.
-                questionResult.IsCorrect = selectedIdSet.Count > 0 && correctIds.SetEquals(selectedIdSet);
-                // Include the list of correct answers so the client can display what the user missed.
-                questionResult.CorrectAnswers = correctAnswers.Select(a => a.AnswerText).ToList();
-
-                if (questionResult.IsCorrect)
-                {
-                    result.QuestionsCorrect += 1;
-                    result.TotalScore += question.Points;
-                }
-            }
-
-            // Update aggregate fields after iterating all questions to keep the DTO consistent.
-            result.TotalQuestions = result.QuestionResults.Count;
-            result.MaxScore = quiz.Questions.Sum(q => q.Points);
-
             // Update streak for logged in user
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"UserId from User.FindFirstValue {userId}", userId);
             if (!string.IsNullOrEmpty(userId))
             {
                 var user = await _userManager.FindByIdAsync(userId);
@@ -294,25 +230,62 @@ namespace QuizApi.Controllers
                     }
                 }
             }
-            return Ok(result);
+
+            var attempt = model.Adapt<QuizAttempt>();
+            attempt.UserId = userId!; // Set the UserId of the attempt to the logged-in user
+
+
+            var saveSuccess = await _quizRepository.SaveQuizAttempt(attempt);
+            if (!saveSuccess)
+            {
+                _logger.LogWarning("Failed to save quiz attempt for QuizId {QuizId}", attempt.QuizId);
+                return StatusCode(500, "Failed to save quiz attempt");
+            }
+
+            return Ok(new { message = "Quiz attempt saved successfully" });
         }
 
-        private async Task<bool> QuizExists(int id)
+        [HttpGet("results/{quizId}")]
+        public async Task<IActionResult> GetQuizResults(int quizId)
         {
-            return await _quizRepository.GetQuizById(id) != null;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User missing.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
+
+            // Fetch quiz attempts for the given quizId and userId
+            var attempts = await _quizRepository.GetQuizAttempts(quizId, userId);
+            if (attempts == null || !attempts.Any())
+            {
+                return NotFound("No quiz attempts found for this quiz and user.");
+            }
+
+            var attemptDtos = attempts.Adapt<List<QuizAttemptDTO>>();
+
+            return Ok(new { user.UserName, attemptDtos });
         }
 
-        // GET: api/Quiz/owner/{ownerId}
+
+        // GET: api/Quiz/owner/
         // Returns all quizzes that belong to a given owner.
         [Authorize]
-        [HttpGet("owner/{ownerId}")]
-        public async Task<ActionResult<List<Quiz>>> GetQuizzesByOwner(string ownerId)
+        [HttpGet("owner")]
+        public async Task<ActionResult<List<Quiz>>> GetQuizzesByOwner()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized("Brukeridentitet mangler.");
             }
+
+            var ownerId = userId; // For now, only allow fetching own quizzes
 
             var isAdmin = User.IsInRole("Admin");
             if (!isAdmin && !string.Equals(ownerId, userId, StringComparison.Ordinal))
@@ -323,6 +296,11 @@ namespace QuizApi.Controllers
             var quizzes = await _quizRepository.GetByOwnerId(ownerId); // Fetch quizzes by ownerId
             var quizDtos = quizzes.Adapt<List<QuizDTO>>();
             return Ok(quizDtos);
+        }
+
+        private async Task<bool> QuizExists(int id)
+        {
+            return await _quizRepository.GetQuizById(id) != null;
         }
 
     }

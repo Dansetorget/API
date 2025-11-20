@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("ItemDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ItemDbContextConnection' not found.");
 
 // ===== Configuration & Logging =====
-// (Add any configuration or logging setup here if needed)
+
 
 // Configures Swagger (OpenAPI) for API and enable JWT authentication within the Swagger UI
 builder.Services.AddSwaggerGen(options =>
@@ -61,12 +61,11 @@ builder.Services.AddDbContext<QuizDbContext>(options =>
         builder.Configuration["ConnectionStrings:QuizDbContextConnection"]);
 });
 
-builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlite(builder.Configuration["ConnectionStrings:AuthDbContextConnection"]));
+
 
 builder.Services.AddIdentity<AuthUser, IdentityRole>()
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AuthDbContext>()
+    .AddEntityFrameworkStores<QuizDbContext>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddCors(options =>
