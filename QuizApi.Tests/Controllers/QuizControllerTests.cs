@@ -239,7 +239,7 @@ public class QuizControllerTests
 
 
         var quiz = new Quiz { Id = 42, Title = "History" };
-        mockRepo.Setup(repo => repo.GetQuizById(42)).ReturnsAsync(quiz);
+        mockRepo.Setup(r => r.GetQuizById(42)).ReturnsAsync(quiz);
 
 
         // Act
@@ -253,7 +253,7 @@ public class QuizControllerTests
         Assert.Equal(42, quizDto.Id);
         Assert.Equal("History", quizDto.Title);
 
-        mockRepo.Verify(repo => repo.GetQuizById(42), Times.Once);
+        mockRepo.Verify(r => r.GetQuizById(42), Times.Once);
     }
 
     // Negative test for read by id
@@ -265,7 +265,7 @@ public class QuizControllerTests
         var controller = CreateController(mockRepo);
 
 
-        mockRepo.Setup(repo => repo.GetQuizById(42)).ReturnsAsync((Quiz?)null); // simulate not found
+        mockRepo.Setup(r => r.GetQuizById(42)).ReturnsAsync((Quiz?)null); // simulate not found
 
 
         // Act 
@@ -277,7 +277,7 @@ public class QuizControllerTests
 
 
         // Verify that repository was called exactly once
-        mockRepo.Verify(repo => repo.GetQuizById(42), Times.Once);
+        mockRepo.Verify(r => r.GetQuizById(42), Times.Once);
     }
 
 
@@ -361,5 +361,64 @@ public class QuizControllerTests
         mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
+    // Test for delete quiz
+    [Fact]
+    public async Task DeleteQuiz_ShouldReturnNoContent_WhenDeletionIsSuccessful()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        // Mock existing quiz owned by the user
+        var existingQuiz = new Quiz
+        {
+            Id = 1,
+            OwnerId = "1"
+        };
+
+        mockRepo.Setup(r => r.GetQuizById(1))
+                .ReturnsAsync(existingQuiz);
+
+        mockRepo.Setup(r => r.Delete(1))
+                .ReturnsAsync(true);
+
+        // Act
+        var result = await controller.DeleteQuiz(1);
+
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+
+        // Verify Delete was called exactly once
+        mockRepo.Verify(r => r.Delete(1), Times.Once);
+    }
+
+
+    // Negative test for delete quiz
+    [Fact]
+    public async Task DeleteQuiz_ShouldReturnForbid_WhenUserDoesNotOwnQuiz()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        // Mock existing quiz NOT owned by the user
+        var existingQuiz = new Quiz
+        {
+            Id = 1,
+            OwnerId = "999"   // <-- Not owned by the logged-in user
+        };
+
+        mockRepo.Setup(r => r.GetQuizById(1))
+                .ReturnsAsync(existingQuiz);
+
+        // Act
+        var result = await controller.DeleteQuiz(1);
+
+        // Assert
+        Assert.IsType<ForbidResult>(result);
+
+        // Ensure Delete() was never called
+        mockRepo.Verify(r => r.Delete(1), Times.Never);
+    }
 
 }
