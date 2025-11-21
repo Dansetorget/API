@@ -20,7 +20,7 @@ var loggerConfiguration = new LoggerConfiguration()
     .WriteTo.File($"APILogs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log")
     .Filter.ByExcluding(e => e.Properties.TryGetValue("SourceContext", out var value) &&
                             e.Level == LogEventLevel.Information &&
-                            e.MessageTemplate.Text.Contains("Execute DbCommand"));
+                            e.MessageTemplate.Text.Contains("Executed DbCommand"));
 var logger = loggerConfiguration.CreateLogger();
 builder.Logging.AddSerilog(logger);
 
