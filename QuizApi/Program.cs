@@ -17,7 +17,7 @@ var connectionString = builder.Configuration.GetConnectionString("ItemDbContextC
 // ===== Configuration & Logging =====
 var loggerConfiguration = new LoggerConfiguration()
     .MinimumLevel.Information()
-    .WriteTo.File("APILogs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log")
+    .WriteTo.File($"APILogs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log")
     .Filter.ByExcluding(e => e.Properties.TryGetValue("SourceContext", out var value) &&
                             e.Level == LogEventLevel.Information &&
                             e.MessageTemplate.Text.Contains("Execute DbCommand"));
