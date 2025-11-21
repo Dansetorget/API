@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using QuizApi.DTOs;
 using QuizApi.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace QuizApi.Controllers
 {
@@ -239,27 +240,20 @@ namespace QuizApi.Controllers
         [HttpPatch("changepassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized("No logged-in user found.");
-            }
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
 
             var result = await _userManager.ChangePasswordAsync(
-                user,
+                currentUser,
                 changePasswordDto.CurrentPassword,
                 changePasswordDto.NewPassword
             );
 
             if (!result.Succeeded)
             {
-                _logger.LogWarning("[AuthController] Password change failed for {Username}", user.UserName);
+                _logger.LogWarning("[AuthController] Password change failed for {Username}", currentUser.UserName);
 
                 return BadRequest(new
                 {
@@ -267,10 +261,13 @@ namespace QuizApi.Controllers
                 });
             }
 
-            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", user.UserName);
+            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", currentUser.UserName);
 
             return Ok(new { Message = "Password changed successfully" });
         }
+
+        [Authorize]
+        [HttpPatch("changeavatar")]
 
         // Delete user account
         [Authorize]
