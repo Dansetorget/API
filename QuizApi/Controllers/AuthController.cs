@@ -62,19 +62,19 @@ namespace QuizApi.Controllers
 
             if (user == null)
             {
-                _logger.LogWarning("[AuthController] Login failed (no such user) for {Username}", loginDto.Username);
+                _logger.LogWarning("Login failed (no such user) for {Username}", loginDto.Username);
                 return Unauthorized(new { Message = "Invalid credentials" });
             }
 
             var valid = await _userManager.CheckPasswordAsync(user, loginDto.Password); // Check if the provided password is correct
             if (!valid)
             {
-                _logger.LogWarning("[AuthController] Login failed (invalid password) for {Username}", loginDto.Username);
+                _logger.LogWarning("Login failed (invalid password) for {Username}", loginDto.Username);
                 return Unauthorized(new { Message = "Invalid credentials" });
             }
 
             var token = await GenerateJwtTokenAsync(user);
-            _logger.LogInformation("[AuthController] Login success for {Username}", loginDto.Username);
+            _logger.LogInformation("Login success for {Username}", loginDto.Username);
             return Ok(new { Token = token }); // Return the JWT token to the client on successful login
 
         }
