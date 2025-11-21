@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using QuizApi.Models;
 
@@ -78,28 +76,27 @@ public class QuizRepository : IQuizRepository
             _logger.LogError("[QuizRepository] Error saving quiz attempt. QuizId={QuizId} , Points={Points}, TimeTaken={TimeTaken}. Error message: {e}",
                 attempt.QuizId, attempt.Points, attempt.TimeTaken, e.Message);
 
-
-            // Show the inner exception, which often has the real cause
+            // Show the inner exception message if it exists
             if (e.InnerException != null)
-                Console.WriteLine("Inner Exception: " + e.InnerException.Message);
+                _logger.LogError("[QuizRepository] Inner Exception: " + e.InnerException.Message);
             return false;
         }
     }
 
-    public async Task<IEnumerable<QuizAttempt?>> GetQuizAttempts(int quizId, string userId)
+    public async Task<IEnumerable<QuizAttempt?>> GetQuizAttempts(int quizId)
     {
         try
         {
             var attempts = await _db.QuizAttempts
-                .Where(qa => qa.QuizId == quizId && qa.UserId == userId)
+                .Where(qa => qa.QuizId == quizId)
                 .ToListAsync();
-            Console.WriteLine($"Retrieved {attempts.Count} attempts for QuizId {quizId} and UserId {userId}");
+            Console.WriteLine($"Retrieved {attempts.Count} attempts for QuizId {quizId}");
             return attempts;
 
         }
         catch (Exception)
         {
-            _logger.LogError("[QuizRepository] GetQuizAttempt: Error retrieving quiz attempt for QuizId {QuizId} and UserId {UserId}", quizId, userId);
+            _logger.LogError("[QuizRepository] GetQuizAttempt: Error retrieving quiz attempt for QuizId {QuizId}", quizId);
             return null!;
         }
     }

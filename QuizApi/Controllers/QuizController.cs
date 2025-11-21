@@ -45,7 +45,7 @@ namespace QuizApi.Controllers
             }
             catch (Exception e)
             {
-                // log error
+                _logger.LogError("[QuizController] GetQuizzes: Error retrieving all quizzes. Exception: {ExceptionMessage}", e.Message);
                 return StatusCode(500, $"An error occurred: {e.Message}");
             }
 
@@ -106,7 +106,7 @@ namespace QuizApi.Controllers
                 var success = await _quizRepository.Update(existingQuiz);
                 if (!success)
                 {
-                    // Log dette
+                    _logger.LogError("[QuizController] Failed to update quiz with ID {QuizId}", id);
                     return StatusCode(500, "Failed to update quiz");
                 }
             }
@@ -144,7 +144,7 @@ namespace QuizApi.Controllers
             var created = await _quizRepository.Create(quiz);
             if (!created)
             {
-                // Log error
+                _logger.LogError("[QuizController] CreateQuiz: Error creating new quiz for user {UserId}", userId);
                 return StatusCode(500, "Failed to create quiz");
             }
 
@@ -184,7 +184,7 @@ namespace QuizApi.Controllers
         // POST: api/Quiz/submit
         // Submits answers for a quiz and returns the result
         [HttpPost("submit")]
-        public async Task<IActionResult> SubmitQuizAttempt(QuizAttemptDTO model)
+        public async Task<IActionResult> SubmitQuizAttempt(CreateQuizAttemptDTO model)
         {
             // Basic validation to ensure we have a quiz id to work with.
             if (model == null || model.QuizId <= 0)
@@ -194,13 +194,12 @@ namespace QuizApi.Controllers
 
             // Update streak for logged in user
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Console.WriteLine($"UserId from User.FindFirstValue {userId}", userId);
             if (!string.IsNullOrEmpty(userId))
             {
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
                 {
-                    var today = DateTime.UtcNow.Date;
+                    var today = DateTime.Now.Date;
                     if (user.LastQuizDate == null) // First time taking a quiz
                     {
                         user.Streak = 1;
@@ -232,7 +231,8 @@ namespace QuizApi.Controllers
             }
 
             var attempt = model.Adapt<QuizAttempt>();
-            attempt.UserId = userId!; // Set the UserId of the attempt to the logged-in user
+            attempt.UserId = userId!; // Can be null for anonymous users;
+            Console.WriteLine($"Saving quiz attempt for QuizId {attempt.QuizId} by UserId {attempt.UserId}");
 
 
             var saveSuccess = await _quizRepository.SaveQuizAttempt(attempt);
@@ -248,28 +248,26 @@ namespace QuizApi.Controllers
         [HttpGet("results/{quizId}")]
         public async Task<IActionResult> GetQuizResults(int quizId)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized("User missing.");
-            }
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
-
             // Fetch quiz attempts for the given quizId and userId
-            var attempts = await _quizRepository.GetQuizAttempts(quizId, userId);
+            var attempts = await _quizRepository.GetQuizAttempts(quizId);
             if (attempts == null || !attempts.Any())
             {
                 return NotFound("No quiz attempts found for this quiz and user.");
             }
 
-            var attemptDtos = attempts.Adapt<List<QuizAttemptDTO>>();
 
-            return Ok(new { user.UserName, attemptDtos });
+            var count = 0;
+            var attemptDtos = attempts.Adapt<List<QuizAttemptDTO>>();
+            foreach (var dto in attemptDtos)
+            {
+                var user = await _userManager.FindByIdAsync(attempts.ElementAt(count)!.UserId);
+                dto.UserName = user != null ? user.UserName ?? "Unknown" : "Anonymous";
+                count++;
+            }
+
+
+
+            return Ok(attemptDtos);
         }
 
 
