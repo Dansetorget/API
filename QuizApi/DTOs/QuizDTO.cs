@@ -1,13 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 
 namespace QuizApi.DTOs;
 
 public class QuizDTO
 {
     public int Id { get; set; } = 0;
-    [Required(ErrorMessage = "Tittel er påkrevd")]
+    [Required(ErrorMessage = "Title is required.")]
     public string Title { get; set; } = string.Empty;
-    [Required(ErrorMessage = "Beskrivelse er påkrevd")]
+    // Description can be optional, but if provided, it should not be empty
     public string Description { get; set; } = string.Empty;
     public List<QuestionDTO> Questions { get; set; } = new();
 }
@@ -36,7 +37,7 @@ public class CreateQuizDTO
     [Required(ErrorMessage = "Tittel er påkrevd")]
     public string Title { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Beskrivelse er påkrevd")]
+    // Description can be optional, but if provided, it should not be empty
     public string Description { get; set; } = string.Empty;
 
     public List<CreateQuestionDTO> Questions { get; set; } = new();
