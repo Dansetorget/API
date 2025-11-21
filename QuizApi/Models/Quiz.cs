@@ -14,4 +14,5 @@ public class Quiz
     public string OwnerId { get; set; } = default!;
     // Navigation property
     public virtual List<Question>? Questions { get; set; }
+    public virtual AuthUser? Owner { get; set; } = default;
 }

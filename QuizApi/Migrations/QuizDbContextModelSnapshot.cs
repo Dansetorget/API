@@ -290,6 +290,8 @@ namespace QuizApi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OwnerId");
+
                     b.ToTable("Quiz");
                 });
 
@@ -406,6 +408,17 @@ namespace QuizApi.Migrations
                         .HasForeignKey("QuizId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("QuizApi.Models.Quiz", b =>
+                {
+                    b.HasOne("QuizApi.Models.AuthUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("QuizApi.Models.QuizAttempt", b =>
