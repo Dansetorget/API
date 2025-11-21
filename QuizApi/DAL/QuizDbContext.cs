@@ -8,7 +8,7 @@ public class QuizDbContext : IdentityDbContext
 {
     public QuizDbContext(DbContextOptions<QuizDbContext> options) : base(options)
     {
-        Database.EnsureCreated();
+        // Database.EnsureCreated();
     }
 
     public DbSet<AuthUser> AuthUsers { get; set; }
