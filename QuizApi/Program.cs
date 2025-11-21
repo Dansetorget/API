@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text;
-using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,12 +8,22 @@ using Microsoft.OpenApi.Models;
 using QuizApi.DAL;
 using QuizApi.MapsterConfig.cs;
 using QuizApi.Models;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("ItemDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ItemDbContextConnection' not found.");
 
 // ===== Configuration & Logging =====
-// (Add any configuration or logging setup here if needed)
+var loggerConfiguration = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.File("APILogs/app_{DateTime.Now:yyyyMMdd_HHmmss}.log")
+    .Filter.ByExcluding(e => e.Properties.TryGetValue("SourceContext", out var value) &&
+                            e.Level == LogEventLevel.Information &&
+                            e.MessageTemplate.Text.Contains("Execute DbCommand"));
+var logger = loggerConfiguration.CreateLogger();
+builder.Logging.AddSerilog(logger);
+
 
 // Configures Swagger (OpenAPI) for API and enable JWT authentication within the Swagger UI
 builder.Services.AddSwaggerGen(options =>
