@@ -201,6 +201,52 @@ namespace QuizApi.Controllers
             return Ok(new { Message = "Password changed successfully" });
         }
 
+        // Endpoint for changing username
+        // Patch api/Auth/changeusername
+        [Authorize]
+        [HttpPatch("changeusername")]
+        public async Task<IActionResult> ChangeUsername([FromBody] ChangeUsernameDTO changeUsernameDto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("No logged-in user found.");
+            }
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Check that new username is different from current username
+            var newUsername = changeUsernameDto.NewUsername.Trim();
+            if (string.Equals(newUsername, user.UserName, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("New username must be different from current username.");
+
+            // Check if the new username is already taken
+            var existing = await _userManager.FindByNameAsync(newUsername);
+            if (existing != null)
+                return Conflict("Username already in use.");
+
+            // Update the username
+            try
+            {
+                await _userManager.SetUserNameAsync(user, newUsername);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error changing username for {UserId}", userId);
+                return StatusCode(500, "An error occurred while changing the username.");
+            }
+
+            // Update security stamp so tokens can be invalidated if desired
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            _logger.LogInformation("Username changed for user {UserId} => {NewUsername}", userId, newUsername);
+            var newToken = await GenerateJwtTokenAsync(user);
+            return Ok(new { Message = "Username changed successfully", Token = newToken });
+        }
+
 
         // Delete user account
         [Authorize]
