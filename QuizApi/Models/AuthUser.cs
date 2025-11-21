@@ -10,6 +10,6 @@ namespace QuizApi.Models
         public int Streak { get; set; } = 0;
         public DateTime? LastQuizDate { get; set; }
 
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; } = DateTime.Now;
     }
 }
