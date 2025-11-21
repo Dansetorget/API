@@ -78,10 +78,9 @@ public class QuizRepository : IQuizRepository
             _logger.LogError("[QuizRepository] Error saving quiz attempt. QuizId={QuizId} , Points={Points}, TimeTaken={TimeTaken}. Error message: {e}",
                 attempt.QuizId, attempt.Points, attempt.TimeTaken, e.Message);
 
-
-            // Show the inner exception, which often has the real cause
+            // Show the inner exception message if it exists
             if (e.InnerException != null)
-                Console.WriteLine("Inner Exception: " + e.InnerException.Message);
+                _logger.LogError("[QuizRepository] Inner Exception: " + e.InnerException.Message);
             return false;
         }
     }

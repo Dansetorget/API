@@ -45,7 +45,7 @@ namespace QuizApi.Controllers
             }
             catch (Exception e)
             {
-                // log error
+                _logger.LogError("[QuizController] GetQuizzes: Error retrieving all quizzes. Exception: {ExceptionMessage}", e.Message);
                 return StatusCode(500, $"An error occurred: {e.Message}");
             }
 
@@ -106,7 +106,7 @@ namespace QuizApi.Controllers
                 var success = await _quizRepository.Update(existingQuiz);
                 if (!success)
                 {
-                    // Log dette
+                    _logger.LogError("[QuizController] Failed to update quiz with ID {QuizId}", id);
                     return StatusCode(500, "Failed to update quiz");
                 }
             }
@@ -144,7 +144,7 @@ namespace QuizApi.Controllers
             var created = await _quizRepository.Create(quiz);
             if (!created)
             {
-                // Log error
+                _logger.LogError("[QuizController] CreateQuiz: Error creating new quiz for user {UserId}", userId);
                 return StatusCode(500, "Failed to create quiz");
             }
 
