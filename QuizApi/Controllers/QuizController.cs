@@ -141,8 +141,6 @@ namespace QuizApi.Controllers
                 count++;
             }
 
-
-
             return Ok(attemptDtos);
         }
 

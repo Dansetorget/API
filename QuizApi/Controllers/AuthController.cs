@@ -162,45 +162,6 @@ namespace QuizApi.Controllers
         }
 
 
-        // Endpoint for changing password
-        // Patch api/Auth/changepassword
-        [Authorize]
-        [HttpPatch("changepassword")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized("No logged-in user found.");
-            }
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
-
-            var result = await _userManager.ChangePasswordAsync(
-                user,
-                changePasswordDto.CurrentPassword,
-                changePasswordDto.NewPassword
-            );
-
-            if (!result.Succeeded)
-            {
-                _logger.LogWarning("[AuthController] Password change failed for {Username}", user.UserName);
-
-                return BadRequest(new
-                {
-                    Errors = result.Errors.Select(e => e.Description)
-                });
-            }
-
-            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", user.UserName);
-
-            return Ok(new { Message = "Password changed successfully" });
-        }
-
         // Endpoint for changing username
         // Patch api/Auth/changeusername
         [Authorize]
@@ -270,6 +231,45 @@ namespace QuizApi.Controllers
             _logger.LogInformation("Email changed for user {UserId} => {NewEmail}", userId, newEmail);
             return Ok(new { Message = "Email changed successfully.", Token = newToken });
 
+        }
+
+        // Endpoint for changing password
+        // Patch api/Auth/changepassword
+        [Authorize]
+        [HttpPatch("changepassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+            {
+                return Unauthorized("No logged-in user found.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized("User not found.");
+            }
+
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                changePasswordDto.CurrentPassword,
+                changePasswordDto.NewPassword
+            );
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("[AuthController] Password change failed for {Username}", user.UserName);
+
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", user.UserName);
+
+            return Ok(new { Message = "Password changed successfully" });
         }
 
         // Delete user account
