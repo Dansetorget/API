@@ -5,6 +5,7 @@ using Mapster;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using Microsoft.IdentityModel.Tokens;
 using QuizApi.DTOs;
 using QuizApi.Models;
@@ -201,36 +202,114 @@ namespace QuizApi.Controllers
             return Ok(new { Message = "Password changed successfully" });
         }
 
+        // Endpoint for changing username
+        // Patch api/Auth/changeusername
+        [Authorize]
+        [HttpPatch("changeusername")]
+        public async Task<IActionResult> ChangeUsername([FromBody] ChangeUsernameDTO changeUsernameDto)
+        {
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            // Check that new username is different from current username
+            var newUsername = changeUsernameDto.NewUsername.Trim();
+            if (string.Equals(newUsername, currentUser.UserName, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("New username must be different from current username.");
+
+            // Check if the new username is already taken
+            var existing = await _userManager.FindByNameAsync(newUsername);
+            if (existing != null)
+                return Conflict("Username already in use.");
+
+            // Update the username
+            var setNewUsername = await _userManager.SetUserNameAsync(currentUser, newUsername);
+            if (!setNewUsername.Succeeded)
+            {
+                _logger.LogWarning("Could not change username for {UserId}: {@Errors}", userId, setNewUsername.Errors);
+                return BadRequest(setNewUsername.Errors);
+            }
+
+            // Update security stamp so tokens can be invalidated if desired
+            await _userManager.UpdateSecurityStampAsync(currentUser);
+
+            _logger.LogInformation("Username changed for user {UserId} => {NewUsername}", userId, newUsername);
+            var newToken = await GenerateJwtTokenAsync(currentUser);
+            return Ok(new { Message = "Username changed successfully", Token = newToken });
+        }
+
+        // Endpoint for changing email
+        // Patch api/Auth/changeemail
+        [Authorize]
+        [HttpPatch("changeemail")]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDTO changeEmailDto)
+        {
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            var newEmail = changeEmailDto.NewEmail.Trim();
+
+            // Check if the new email is already taken
+            var existing = await _userManager.FindByEmailAsync(newEmail);
+            if (existing != null)
+                return Conflict("Email already in use.");
+
+            var setNewEmail = await _userManager.SetEmailAsync(currentUser, newEmail);
+            if (!setNewEmail.Succeeded)
+            {
+                _logger.LogWarning("Could not change email for {UserId}: {@Errors}", userId, setNewEmail.Errors);
+                return BadRequest(setNewEmail.Errors);
+            }
+            // Update security stamp so tokens can be invalidated if desired
+            await _userManager.UpdateSecurityStampAsync(currentUser);
+
+            var newToken = await GenerateJwtTokenAsync(currentUser);
+
+            _logger.LogInformation("Email changed for user {UserId} => {NewEmail}", userId, newEmail);
+            return Ok(new { Message = "Email changed successfully.", Token = newToken });
+
+        }
 
         // Delete user account
         [Authorize]
         [HttpDelete("deleteaccount")]
         public async Task<IActionResult> DeleteAccount()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized("No logged-in user found.");
-            }
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
-
-            var result = await _userManager.DeleteAsync(user);
+            // Delete the user account
+            var result = await _userManager.DeleteAsync(currentUser);
             if (!result.Succeeded)
             {
-                _logger.LogWarning("[AuthController] Account deletion failed for {Username}", user.UserName);
+                _logger.LogWarning("[AuthController] Account deletion failed for {Username}", currentUser.UserName);
                 return BadRequest(new
                 {
                     Errors = result.Errors.Select(e => e.Description)
                 });
             }
 
-            _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", user.UserName);
+            _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", currentUser.UserName);
             return Ok(new { Message = "Account deleted successfully" });
+        }
+
+        // Helper method for getting the current user
+        private async Task<(AuthUser? user, string? UserId, IActionResult? error)> GetCurrentUser()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return (null, null, Unauthorized("No logged-in user."));
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return (null, null, NotFound("User not found."));
+
+            return (user, userId, null);
         }
     }
 }
