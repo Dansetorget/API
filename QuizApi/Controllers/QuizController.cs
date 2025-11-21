@@ -128,7 +128,7 @@ namespace QuizApi.Controllers
             var attempts = await _quizRepository.GetQuizAttempts(quizId);
             if (attempts == null || !attempts.Any())
             {
-                return NotFound("No quiz attempts found for this quiz and user.");
+                return Ok(new { message = "No quiz attempts found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
             }
 
 

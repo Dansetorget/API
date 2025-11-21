@@ -8,8 +8,9 @@ public class QuizDTO
     public int Id { get; set; } = 0;
     [Required(ErrorMessage = "Title is required.")]
     public string Title { get; set; } = string.Empty;
-    // Description can be optional, but if provided, it should not be empty
     public string Description { get; set; } = string.Empty;
+    public DateTime? CreatedAt { get; set; }
+
     public List<QuestionDTO> Questions { get; set; } = new();
 }
 
