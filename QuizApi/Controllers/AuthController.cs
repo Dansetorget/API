@@ -229,14 +229,11 @@ namespace QuizApi.Controllers
                 return Conflict("Username already in use.");
 
             // Update the username
-            try
+            var setNewUsername = await _userManager.SetUserNameAsync(user, newUsername);
+            if (!setNewUsername.Succeeded)
             {
-                await _userManager.SetUserNameAsync(user, newUsername);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error changing username for {UserId}", userId);
-                return StatusCode(500, "An error occurred while changing the username.");
+                _logger.LogWarning("Could not change username for {UserId}: {@Errors}", userId, setNewUsername.Errors);
+                return BadRequest(setNewUsername.Errors);
             }
 
             // Update security stamp so tokens can be invalidated if desired
@@ -247,6 +244,42 @@ namespace QuizApi.Controllers
             return Ok(new { Message = "Username changed successfully", Token = newToken });
         }
 
+        // Endpoint for changing email
+        // Patch api/Auth/changeemail
+        [Authorize]
+        [HttpPatch("changeemail")]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDTO changeEmailDto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("No logged-in user.");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound("User not found.");
+
+            var newEmail = changeEmailDto.NewEmail.Trim();
+
+            // Check if the new email is already taken
+            var existing = await _userManager.FindByEmailAsync(newEmail);
+            if (existing != null)
+                return Conflict("Email already in use.");
+
+            var setNewEmail = await _userManager.SetEmailAsync(user, newEmail);
+            if (!setNewEmail.Succeeded)
+            {
+                _logger.LogWarning("Could not change email for {UserId}: {@Errors}", userId, setNewEmail.Errors);
+                return BadRequest(setNewEmail.Errors);
+            }
+            // Update security stamp so tokens can be invalidated if desired
+            await _userManager.UpdateSecurityStampAsync(user);
+
+            var newToken = await GenerateJwtTokenAsync(user);
+
+            _logger.LogInformation("Email changed for user {UserId} => {NewEmail}", userId, newEmail);
+            return Ok(new { Message = "Email changed successfully.", Token = newToken });
+
+        }
 
         // Delete user account
         [Authorize]
