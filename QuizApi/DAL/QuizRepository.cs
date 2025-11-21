@@ -86,20 +86,20 @@ public class QuizRepository : IQuizRepository
         }
     }
 
-    public async Task<IEnumerable<QuizAttempt?>> GetQuizAttempts(int quizId, string userId)
+    public async Task<IEnumerable<QuizAttempt?>> GetQuizAttempts(int quizId)
     {
         try
         {
             var attempts = await _db.QuizAttempts
-                .Where(qa => qa.QuizId == quizId && qa.UserId == userId)
+                .Where(qa => qa.QuizId == quizId)
                 .ToListAsync();
-            Console.WriteLine($"Retrieved {attempts.Count} attempts for QuizId {quizId} and UserId {userId}");
+            Console.WriteLine($"Retrieved {attempts.Count} attempts for QuizId {quizId}");
             return attempts;
 
         }
         catch (Exception)
         {
-            _logger.LogError("[QuizRepository] GetQuizAttempt: Error retrieving quiz attempt for QuizId {QuizId} and UserId {UserId}", quizId, userId);
+            _logger.LogError("[QuizRepository] GetQuizAttempt: Error retrieving quiz attempt for QuizId {QuizId}", quizId);
             return null!;
         }
     }
