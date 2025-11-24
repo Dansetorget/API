@@ -7,5 +7,7 @@ namespace QuizApi.DTOs
         public IList<string> Roles { get; set; } = new List<string>();
         public int Streak { get; set; } = 0;
         public DateTime? CreatedAt { get; set; }
+        public int AvatarId { get; set; } = 0;
+        public string? AvatarUrl { get; set; }
     }
 }

@@ -158,7 +158,8 @@ namespace QuizApi.Controllers
 
             var userInfo = user.Adapt<UserInfoDTO>();
             userInfo.Roles = roles.ToList();
-
+            userInfo.AvatarId = user.AvatarId ?? 0;
+            userInfo.AvatarUrl = user.AvatarId.HasValue ? $"/avatars/{user.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
             return Ok(userInfo);
         }
 
@@ -266,9 +267,6 @@ namespace QuizApi.Controllers
             return Ok(new { Message = "Password changed successfully" });
         }
 
-        [Authorize]
-        [HttpPatch("changeavatar")]
-
         // Delete user account
         [Authorize]
         [HttpDelete("deleteaccount")]
@@ -292,6 +290,37 @@ namespace QuizApi.Controllers
 
             _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", currentUser.UserName);
             return Ok(new { Message = "Account deleted successfully" });
+        }
+
+        [Authorize]
+        [HttpPatch("changeavatar")]
+        public async Task<IActionResult> SetAvatar([FromBody] int avatarId)
+        {
+            // Validate avatarId is in valid range (1-5)
+            if (avatarId < 1 || avatarId > 5)
+            {
+                return BadRequest("Avatar ID must be between 1 and 5.");
+            }
+
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            currentUser.AvatarId = avatarId;
+
+            var result = await _userManager.UpdateAsync(currentUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Avatar change failed for {Username}", currentUser.UserName);
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("Avatar changed successfully for {Username}", currentUser.UserName);
+            return Ok(new { Message = "Avatar changed successfully" });
         }
 
         // Helper method for getting the current user
