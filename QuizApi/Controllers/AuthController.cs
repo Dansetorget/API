@@ -296,7 +296,7 @@ namespace QuizApi.Controllers
         [HttpPatch("changeavatar")]
         public async Task<IActionResult> SetAvatar([FromBody] int avatarId)
         {
-            // Validate avatarId is in valid range (1-5)
+            // Validate avatarId is in valid range (1-5 for regular users)
             if (avatarId < 1 || avatarId > 5)
             {
                 return BadRequest("Avatar ID must be between 1 and 5.");
