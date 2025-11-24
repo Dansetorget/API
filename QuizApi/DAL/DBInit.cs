@@ -20,7 +20,8 @@ public static class DBInit
             admin = new AuthUser
             {
                 UserName = "admin",
-                Email = "dansetorget@gmail.com"
+                Email = "dansetorget@gmail.com",
+                AvatarId = 6
             };
 
             var createResult = await userManager.CreateAsync(admin, "Dansetorget123!");

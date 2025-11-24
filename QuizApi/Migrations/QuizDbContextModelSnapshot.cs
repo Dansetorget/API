@@ -330,6 +330,9 @@ namespace QuizApi.Migrations
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
+                    b.Property<int?>("AvatarId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("TEXT");
 

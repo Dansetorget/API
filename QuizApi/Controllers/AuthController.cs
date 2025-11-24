@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using QuizApi.DTOs;
 using QuizApi.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace QuizApi.Controllers
 {
@@ -157,7 +158,8 @@ namespace QuizApi.Controllers
 
             var userInfo = user.Adapt<UserInfoDTO>();
             userInfo.Roles = roles.ToList();
-
+            userInfo.AvatarId = user.AvatarId ?? 0;
+            userInfo.AvatarUrl = user.AvatarId.HasValue ? $"/avatars/{user.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
             return Ok(userInfo);
         }
 
@@ -239,27 +241,20 @@ namespace QuizApi.Controllers
         [HttpPatch("changepassword")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized("No logged-in user found.");
-            }
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
 
             var result = await _userManager.ChangePasswordAsync(
-                user,
+                currentUser,
                 changePasswordDto.CurrentPassword,
                 changePasswordDto.NewPassword
             );
 
             if (!result.Succeeded)
             {
-                _logger.LogWarning("[AuthController] Password change failed for {Username}", user.UserName);
+                _logger.LogWarning("[AuthController] Password change failed for {Username}", currentUser.UserName);
 
                 return BadRequest(new
                 {
@@ -267,7 +262,7 @@ namespace QuizApi.Controllers
                 });
             }
 
-            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", user.UserName);
+            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", currentUser.UserName);
 
             return Ok(new { Message = "Password changed successfully" });
         }
@@ -295,6 +290,37 @@ namespace QuizApi.Controllers
 
             _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", currentUser.UserName);
             return Ok(new { Message = "Account deleted successfully" });
+        }
+
+        [Authorize]
+        [HttpPatch("changeavatar")]
+        public async Task<IActionResult> SetAvatar([FromBody] int avatarId)
+        {
+            // Validate avatarId is in valid range (1-5 for regular users)
+            if (avatarId < 1 || avatarId > 5)
+            {
+                return BadRequest("Avatar ID must be between 1 and 5.");
+            }
+
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            currentUser.AvatarId = avatarId;
+
+            var result = await _userManager.UpdateAsync(currentUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Avatar change failed for {Username}", currentUser.UserName);
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("Avatar changed successfully for {Username}", currentUser.UserName);
+            return Ok(new { Message = "Avatar changed successfully" });
         }
 
         // Helper method for getting the current user
