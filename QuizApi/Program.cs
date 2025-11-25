@@ -192,6 +192,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("CorsPolicy");
+app.UseStaticFiles();
 
 // Custom middleware that manually inspect the JWT token for debugging purposes
 // If you encounter bugs, you can comment this in
