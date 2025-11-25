@@ -17,21 +17,21 @@ namespace QuizApi.Tests.Controllers;
 public class QuizControllerTests
 {
     // Private mocks at the top
-    private readonly Mock<IQuizRepository> _repoMock = new();
-    private readonly Mock<ILogger<QuizController>> _loggerMock = new();
-    private readonly Mock<UserManager<AuthUser>> _userManagerMock;
+    private readonly Mock<IQuizRepository> _mockRepo = new();
+    private readonly Mock<ILogger<QuizController>> _mockLogger = new();
+    private readonly Mock<UserManager<AuthUser>> _mockUserManager;
     private readonly QuizController _controller;
 
     public QuizControllerTests()
     {
         // Minimal UserManager mock
         var store = new Mock<IUserStore<AuthUser>>();
-        _userManagerMock = new Mock<UserManager<AuthUser>>(
+        _mockUserManager = new Mock<UserManager<AuthUser>>(
             store.Object,
             null!, null!, null!, null!, null!, null!, null!, null!
         );
 
-        _controller = new QuizController(_repoMock.Object, _loggerMock.Object, _userManagerMock.Object);
+        _controller = new QuizController(_mockRepo.Object, _mockLogger.Object, _mockUserManager.Object);
 
         // Default authenticated user
         var identity = new ClaimsIdentity(new[]
@@ -49,14 +49,15 @@ public class QuizControllerTests
         };
     }
 
+
+    /*---------------------------------------------
+    | Tests for CREATE Quiz, 1 positive, 2 negative
+     --------------------------------------------*/
     // Test for CreateQuiz
     [Fact]
     public async Task CreateQuiz_ShouldReturnCreatedAtAction_WithMappedQuiz()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         var dto = new CreateQuizDTO
         {
             Title = "Geography",
@@ -76,12 +77,12 @@ public class QuizControllerTests
 
         Quiz? captured = null;
 
-        mockRepo.Setup(r => r.Create(It.IsAny<Quiz>()))
+        _mockRepo.Setup(r => r.Create(It.IsAny<Quiz>()))
                 .Callback<Quiz>(q => captured = q)
                 .ReturnsAsync(true);
 
         // Act
-        var result = await controller.CreateQuiz(dto);
+        var result = await _controller.CreateQuiz(dto);
 
         // Assert
         var created = Assert.IsType<CreatedAtActionResult>(result.Result);
@@ -103,32 +104,43 @@ public class QuizControllerTests
         Assert.Equal(qDto.Answers[0].IsCorrect, qReturned.Answers[0].IsCorrect);
 
         // Repo should be called once
-        mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
+        _mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
 
         // Ensure title was correctly mapped into entity
         Assert.Equal(dto.Title, captured!.Title);
     }
 
-    // 
+    // Negative test for CreateQuiz when user is missing
+    [Fact]
+    public async Task CreateQuiz_ShouldReturnUnauthorized_WhenUserMissing()
+    {
+        // Arrange
+        SetUser(null);
+        var dto = new CreateQuizDTO();
+
+        // Act
+        var result = await _controller.CreateQuiz(dto);
+
+        // Assert
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result.Result);
+        Assert.Equal("User missing.", unauthorized.Value);
+    }
 
     // Negative test for CreateQuiz
     [Fact]
     public async Task CreateQuiz_ShouldReturn500_WhenRepositoryFails()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         var quizDto = new CreateQuizDTO
         {
             Title = "Invalid Quiz"
         };
 
         // Setup repo to return false indicating failure
-        mockRepo.Setup(r => r.Create(It.IsAny<Quiz>())).ReturnsAsync(false);
+        _mockRepo.Setup(r => r.Create(It.IsAny<Quiz>())).ReturnsAsync(false);
 
         // Act
-        var result = await controller.CreateQuiz(quizDto);
+        var result = await _controller.CreateQuiz(quizDto);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
@@ -136,24 +148,29 @@ public class QuizControllerTests
         Assert.Equal("Failed to create quiz", statusCodeResult.Value);
 
         // Repo should have been called once
-        mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
+        _mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
     }
 
-    // Test for read by id
+    /*---------------------------------------------
+    | End of CreateQuiz tests
+     --------------------------------------------*/
+
+    /*--------------------------------------------- 
+    | Tests for Read, 1 positive, 1 negative
+     --------------------------------------------*/
+
+    // Positive test for read by id
     [Fact]
     public async Task GetQuizById_ShouldRetunOk_WhenQuizExists()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
 
         var quiz = new Quiz { Id = 42, Title = "History" };
-        mockRepo.Setup(r => r.GetQuizById(42)).ReturnsAsync(quiz);
+        _mockRepo.Setup(r => r.GetQuizById(42)).ReturnsAsync(quiz);
 
 
         // Act
-        var result = await controller.GetQuiz(42);
+        var result = await _controller.GetQuiz(42);
 
 
         // Assert
@@ -163,7 +180,7 @@ public class QuizControllerTests
         Assert.Equal(42, quizDto.Id);
         Assert.Equal("History", quizDto.Title);
 
-        mockRepo.Verify(r => r.GetQuizById(42), Times.Once);
+        _mockRepo.Verify(r => r.GetQuizById(42), Times.Once);
     }
 
     // Negative test for read by id
@@ -171,15 +188,11 @@ public class QuizControllerTests
     public async Task GetQuizById_ShouldReturnNotFound_WhenQuizDoesNotExist()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
-
-        mockRepo.Setup(r => r.GetQuizById(42)).ReturnsAsync((Quiz?)null); // simulate not found
+        _mockRepo.Setup(r => r.GetQuizById(42)).ReturnsAsync((Quiz?)null); // simulate not found
 
 
         // Act 
-        var result = await controller.GetQuiz(42);
+        var result = await _controller.GetQuiz(42);
 
 
         // Assert
@@ -187,19 +200,64 @@ public class QuizControllerTests
 
 
         // Verify that repository was called exactly once
-        mockRepo.Verify(r => r.GetQuizById(42), Times.Once);
+        _mockRepo.Verify(r => r.GetQuizById(42), Times.Once);
     }
 
+    // Positive test for read all quizzes
+    [Fact]
+    public async Task GetAllQuizzes_ShouldReturnOk_WithListOfQuizzes()
+    {
+        // Arrange
+        var quizzes = new List<Quiz>
+        {
+            new Quiz { Id = 1, Title = "Math" },
+            new Quiz { Id = 2, Title = "Science" }
+        };
 
+        _mockRepo.Setup(r => r.GetAll()).ReturnsAsync(quizzes);
 
-    // Test for update quiz
+        // Act
+        var result = await _controller.GetQuizzes();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var quizDtos = Assert.IsType<List<QuizDTO>>(okResult.Value);
+
+        Assert.Equal(2, quizDtos.Count);
+        Assert.Equal("Math", quizDtos[0].Title);
+        Assert.Equal("Science", quizDtos[1].Title);
+
+        _mockRepo.Verify(r => r.GetAll(), Times.Once);
+    }
+
+    // Negative test for read all quizzes
+    [Fact]
+    public async Task GetAllQuizzes_ShouldReturnNotFound_WhenNoQuizzesExist()
+    {
+        // Arrange
+        _mockRepo.Setup(r => r.GetAll()).ReturnsAsync((IEnumerable<Quiz>?)null);
+
+        // Act
+        var result = await _controller.GetQuizzes();
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result.Result);
+
+        _mockRepo.Verify(r => r.GetAll(), Times.Once);
+    }
+
+    /*---------------------------------------------
+    | End of Read tests
+     --------------------------------------------*/
+
+    /*---------------------------------------------
+    | Tests for UPDATE Quiz, 1 positive, 4 negative
+     --------------------------------------------*/
+    // Positive test for update quiz
     [Fact]
     public async Task UpdateQuiz_ShouldReturnNoContent_WhenUpdateIsSuccessful()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         var quizDto = new QuizDTO
         {
             Id = 1,
@@ -214,24 +272,24 @@ public class QuizControllerTests
             OwnerId = "1"
         };
 
-        mockRepo.Setup(r => r.GetQuizById(1))
+        _mockRepo.Setup(r => r.GetQuizById(1))
                 .ReturnsAsync(existingQuiz);
 
         // Capture the Quiz entity passed to Update()
         Quiz? capturedQuiz = null;
 
-        mockRepo.Setup(r => r.Update(It.IsAny<Quiz>()))
+        _mockRepo.Setup(r => r.Update(It.IsAny<Quiz>()))
                 .Callback<Quiz>(q => capturedQuiz = q)
                 .ReturnsAsync(true);
 
         // Act
-        var result = await controller.UpdateQuiz(1, quizDto);
+        var result = await _controller.UpdateQuiz(1, quizDto);
 
         // Assert
         Assert.IsType<NoContentResult>(result);
 
         // Verify Update was called exactly once
-        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Once);
+        _mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Once);
 
         // Check that the updated quiz contains the new values
         Assert.NotNull(capturedQuiz);
@@ -245,21 +303,17 @@ public class QuizControllerTests
     public async Task UpdateQuiz_ShouldReturnUnauthorized_WhenUserIsNotAuthenticated()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         // No user identity
-        controller.ControllerContext.HttpContext.User =
-            new ClaimsPrincipal(new ClaimsIdentity());
+        SetUser(null);
 
         var dto = new QuizDTO { Id = 1, Title = "Test" };
 
         // Act
-        var result = await controller.UpdateQuiz(1, dto);
+        var result = await _controller.UpdateQuiz(1, dto);
 
         // Assert
         Assert.IsType<UnauthorizedObjectResult>(result);
-        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
+        _mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
 
@@ -268,17 +322,14 @@ public class QuizControllerTests
     public async Task UpdateQuiz_ShouldReturnBadRequest_WhenIdMismatch()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         var dto = new QuizDTO { Id = 2, Title = "Test" };
 
         // Act
-        var result = await controller.UpdateQuiz(1, dto);
+        var result = await _controller.UpdateQuiz(1, dto);
 
         // Assert
         Assert.IsType<BadRequestObjectResult>(result);
-        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
+        _mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
     // Test for quiz not found
@@ -286,15 +337,12 @@ public class QuizControllerTests
     public async Task UpdateQuiz_ShouldReturnNotFound_WhenQuizNotFound()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
-        mockRepo.Setup(r => r.GetQuizById(1)).ReturnsAsync((Quiz)null!);
+        _mockRepo.Setup(r => r.GetQuizById(1)).ReturnsAsync((Quiz)null!);
 
         var dto = new QuizDTO { Id = 1, Title = "Test" };
 
         // Act
-        var result = await controller.UpdateQuiz(1, dto);
+        var result = await _controller.UpdateQuiz(1, dto);
 
         // Assert
         Assert.IsType<NotFoundResult>(result);
@@ -305,10 +353,7 @@ public class QuizControllerTests
     public async Task UpdateQuiz_ShouldReturnForbid_WhenUserDoesNotOwnQuiz()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
-        mockRepo.Setup(r => r.GetQuizById(1)).ReturnsAsync(new Quiz
+        _mockRepo.Setup(r => r.GetQuizById(1)).ReturnsAsync(new Quiz
         {
             Id = 1,
             OwnerId = "999"
@@ -317,24 +362,25 @@ public class QuizControllerTests
         var dto = new QuizDTO { Id = 1, Title = "Updated" };
 
         // Act
-        var result = await controller.UpdateQuiz(1, dto);
+        var result = await _controller.UpdateQuiz(1, dto);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
-        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
+        _mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
-    /* End of Negative test for update quiz */
+    /*---------------------------------------------
+    | End of Update Quiz tests
+     --------------------------------------------*/
 
-    /* Delete quiz tests */
-    // Test for delete quiz
+    /*---------------------------------------------
+    | Tests for DELETE Quiz, 1 positive, 1 negative
+      --------------------------------------------*/
+    // Positive test for delete quiz
     [Fact]
     public async Task DeleteQuiz_ShouldReturnNoContent_WhenDeletionIsSuccessful()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         // Mock existing quiz owned by the user
         var existingQuiz = new Quiz
         {
@@ -342,20 +388,20 @@ public class QuizControllerTests
             OwnerId = "1"
         };
 
-        mockRepo.Setup(r => r.GetQuizById(1))
+        _mockRepo.Setup(r => r.GetQuizById(1))
                 .ReturnsAsync(existingQuiz);
 
-        mockRepo.Setup(r => r.Delete(1))
+        _mockRepo.Setup(r => r.Delete(1))
                 .ReturnsAsync(true);
 
         // Act
-        var result = await controller.DeleteQuiz(1);
+        var result = await _controller.DeleteQuiz(1);
 
         // Assert
         Assert.IsType<NoContentResult>(result);
 
         // Verify Delete was called exactly once
-        mockRepo.Verify(r => r.Delete(1), Times.Once);
+        _mockRepo.Verify(r => r.Delete(1), Times.Once);
     }
 
 
@@ -364,67 +410,37 @@ public class QuizControllerTests
     public async Task DeleteQuiz_ShouldReturnForbid_WhenUserDoesNotOwnQuiz()
     {
         // Arrange
-        var mockRepo = new Mock<IQuizRepository>();
-        var controller = CreateController(mockRepo);
-
         // Mock existing quiz NOT owned by the user
         var existingQuiz = new Quiz
         {
             Id = 1,
-            OwnerId = "999"   // <-- Not owned by the logged-in user
+            OwnerId = "not-owned-by-user-by-logged-in-user"
         };
 
-        mockRepo.Setup(r => r.GetQuizById(1))
+        _mockRepo.Setup(r => r.GetQuizById(1))
                 .ReturnsAsync(existingQuiz);
 
         // Act
-        var result = await controller.DeleteQuiz(1);
+        var result = await _controller.DeleteQuiz(1);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
 
         // Ensure Delete() was never called
-        mockRepo.Verify(r => r.Delete(1), Times.Never);
+        _mockRepo.Verify(r => r.Delete(1), Times.Never);
     }
+    /*---------------------------------------------
+    | End of Delete Quiz tests
+      --------------------------------------------*/
 
-    /* End of delete quiz tests */
-
-    /* Helper method */
-    // Method to create controller with mocked dependencies
-    private QuizController CreateController(Mock<IQuizRepository> repoMock = null!)
+    /* Helper methods */
+    private void SetUser(string? userId)
     {
-        repoMock ??= new Mock<IQuizRepository>();
+        var identity = new ClaimsIdentity();
+        if (!string.IsNullOrEmpty(userId))
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
 
-        var logger = new Mock<ILogger<QuizController>>();
-
-        // Minimal UserManager mock (constructor requires it)
-        var store = new Mock<IUserStore<AuthUser>>();
-        var userManager = new Mock<UserManager<AuthUser>>(
-            store.Object,
-            null!, null!, null!, null!, null!, null!, null!, null!
-        );
-
-        var controller = new QuizController(repoMock.Object, logger.Object, userManager.Object);
-
-        // Default authenticated user
-        var identity = new ClaimsIdentity(
-            new[]
-            {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
-            new Claim(ClaimTypes.Name, "testuser")
-            },
-            "mockAuth"
-        );
-
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext
-            {
-                User = new ClaimsPrincipal(identity)
-            }
-        };
-
-        return controller;
+        _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(identity);
     }
 
 
