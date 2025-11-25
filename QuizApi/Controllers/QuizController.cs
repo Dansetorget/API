@@ -253,7 +253,8 @@ namespace QuizApi.Controllers
                 return NotFound();
             }
 
-            if (!string.Equals(existingQuiz.OwnerId, userId, StringComparison.Ordinal)) // Only the owner/creator can update the quiz
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && !string.Equals(existingQuiz.OwnerId, userId, StringComparison.Ordinal)) // Only the owner/creator can update the quiz
             {
                 return Forbid();
             }
@@ -305,7 +306,8 @@ namespace QuizApi.Controllers
                 return NotFound();
             }
 
-            if (!string.Equals(quiz.OwnerId, userId, StringComparison.Ordinal)) // Only the owner/creator can delete the quiz
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && !string.Equals(quiz.OwnerId, userId, StringComparison.Ordinal)) // Only the owner/creator can delete the quiz
             {
                 return Forbid();
             }
