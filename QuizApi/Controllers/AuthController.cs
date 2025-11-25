@@ -143,23 +143,17 @@ namespace QuizApi.Controllers
         [HttpGet("userinfo")]
         public async Task<IActionResult> GetUserInfo()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the user ID from the JWT claims
-            if (userId == null)
-            {
-                return NotFound("No logged-in user found.");
-            }
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
 
-            var user = await _userManager.FindByIdAsync(userId); // Find the user by ID
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-            var roles = await _userManager.GetRolesAsync(user); // Get the user's roles
+            var roles = await _userManager.GetRolesAsync(currentUser); // Get the user's roles
 
-            var userInfo = user.Adapt<UserInfoDTO>();
+            var userInfo = currentUser.Adapt<UserInfoDTO>();
             userInfo.Roles = roles.ToList();
-            userInfo.AvatarId = user.AvatarId ?? 0;
-            userInfo.AvatarUrl = user.AvatarId.HasValue ? $"/avatars/{user.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
+            userInfo.AvatarId = currentUser.AvatarId ?? 0;
+            userInfo.AvatarUrl = currentUser.AvatarId.HasValue ? $"/avatars/{currentUser.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
             return Ok(userInfo);
         }
 
