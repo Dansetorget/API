@@ -141,7 +141,7 @@ namespace QuizApi.Controllers
                 return Ok(new { message = "No quiz attempts found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
             }
 
-            var filteredAttempts = attempts.Where(a => a != null).ToList();
+            var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
 
             if (!filteredAttempts.Any())
             {
@@ -151,6 +151,7 @@ namespace QuizApi.Controllers
 
 
             var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
+            Console.WriteLine($"Filtered attempts: {filteredAttempts.ToString}");
             // Add usernames
             for (int i = 0; i < attemptDtos.Count; i++)
             {
