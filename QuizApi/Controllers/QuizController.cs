@@ -8,6 +8,7 @@ using QuizApi.DAL;
 using QuizApi.DTOs;
 using QuizApi.Models;
 
+
 namespace QuizApi.Controllers
 {
     [Route("api/Quiz")]
@@ -17,6 +18,7 @@ namespace QuizApi.Controllers
         private readonly IQuizRepository _quizRepository;
         private readonly ILogger<QuizController> _logger;
         private readonly UserManager<AuthUser> _userManager;
+
 
 
         public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger, UserManager<AuthUser> userManager)
@@ -29,7 +31,6 @@ namespace QuizApi.Controllers
 
         // POST: api/Quiz
         // Creates a new quiz
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize] // Only logged in users can create quizzes
         [HttpPost("createquiz")]
         public async Task<ActionResult<QuizDTO>> CreateQuiz(CreateQuizDTO createQuizDto)
@@ -137,7 +138,7 @@ namespace QuizApi.Controllers
         }
 
         // GET: api/Quiz/results/5
-        // Returns all attempts for a specific quiz
+        // Returns first attempts for a specific quiz
         [HttpGet("results/{quizId}")]
         public async Task<IActionResult> GetQuizResults(int quizId)
         {
@@ -156,14 +157,17 @@ namespace QuizApi.Controllers
                 return Ok(new { message = "No attempts from logged in users found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
             }
 
-
             var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
 
-            // Add usernames
+            // Add user info to each attempt
             for (int i = 0; i < attemptDtos.Count; i++)
             {
                 var user = await _userManager.FindByIdAsync(filteredAttempts[i]!.UserId);
                 attemptDtos[i].UserName = user?.UserName ?? "Unknown";
+                var userInfo = user.Adapt<UserInfoDTO>();
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                userInfo.AvatarUrl = user!.AvatarId.HasValue ? $"{baseUrl}/avatars/{user.AvatarId}.svg" : null;
+                attemptDtos[i].AvatarUrl = userInfo.AvatarUrl ?? string.Empty;
             }
 
             return Ok(attemptDtos);
