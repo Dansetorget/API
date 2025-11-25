@@ -53,65 +53,8 @@ public class QuizControllerTests
 
         return controller;
     }
-    // Test for getting all quizzes, commented out for now
-    // [Fact]
-    // public async Task GetQuizzes_ShouldReturnOk_WithListOfQuizDTOs()
-    // {
-    //     // Arrange
-    //     var mockRepo = new Mock<IQuizRepository>();
 
-    //     var quizzes = new List<Quiz>
-    //     {
-    //         new Quiz { Id = 1, Title = "Math"},
-    //         new Quiz { Id = 2, Title = "Science"}
-    //     };
-
-
-    //     mockRepo.Setup(repo => repo.GetAll()).ReturnsAsync(quizzes);
-
-    //     var mockLogger = new Mock<ILogger<QuizController>>();
-    //     var quizController = new QuizController(mockRepo.Object, mockLogger.Object);
-
-    //     // Act
-    //     var result = await quizController.GetQuizzes();
-
-    //     // Assert
-    //     var okResult = result.Result as OkObjectResult;
-    //     var value = Assert.IsAssignableFrom<IEnumerable<QuizDTO>>(okResult!.Value);
-
-    //     // Verify the returned list
-    //     Assert.Equal(2, value.Count());
-    //     Assert.Equal("Math", value.First().Title);
-
-    //     // Verify repository was called
-    //     mockRepo.Verify(repo => repo.GetAll(), Times.Once);
-    // }
-
-    // [Fact]
-    // public async Task GetQuizzes_ShouldReturnStatus500_WhenRepositoryThrows()
-    // {
-    //     // Arrange
-    //     var mockRepo = new Mock<IQuizRepository>();
-    //     mockRepo.Setup(repo => repo.GetAll())
-    //                 .ThrowsAsync(new Exception("Database failure"));
-
-    //     var mockLogger = new Mock<ILogger<QuizController>>();
-    //     var controller = new QuizController(mockRepo.Object, mockLogger.Object);
-
-
-    //     // Act
-    //     var result = await controller.GetQuizzes();
-
-
-    //     // Assert
-    //     var statusResult = Assert.IsType<ObjectResult>(result.Result);
-    //     Assert.Equal(500, statusResult.StatusCode);
-    //     var message = Assert.IsType<string>(statusResult.Value);
-    //     Assert.Contains("Database failure", message);
-
-    //     mockRepo.Verify(repo => repo.GetAll(), Times.Once);
-    // }
-
+    // Test for CreateQuiz
     [Fact]
 
     public async Task CreateQuiz_ShouldReturnCreatedAtActionResult_WithCorrectQuiz_WhenQuizIsCreated()
