@@ -106,8 +106,18 @@ namespace QuizApi.Controllers
 
             var attempt = model.Adapt<QuizAttempt>();
             attempt.UserId = userId!; // Can be null for anonymous users;
-            Console.WriteLine($"Saving quiz attempt for QuizId {attempt.QuizId} by UserId {attempt.UserId}");
+            _logger.LogInformation($"[QuizController] Saving quiz attempt for QuizId {attempt.QuizId} by UserId {attempt.UserId}");
 
+            if (userId != null)
+            {
+                // Check if this is the user's first attempt for this quiz
+                var previousAttempts = await _quizRepository.GetQuizAttemptsByUser(attempt.QuizId, userId);
+                attempt.FirstAttempt = !previousAttempts.Any();
+            }
+            else
+            {
+                attempt.FirstAttempt = false; // Anonymous users cannot have first attempts tracked
+            }
 
             var saveSuccess = await _quizRepository.SaveQuizAttempt(attempt);
             if (!saveSuccess)
@@ -130,7 +140,6 @@ namespace QuizApi.Controllers
             {
                 return Ok(new { message = "No quiz attempts found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
             }
-
 
             var count = 0;
             var attemptDtos = attempts.Adapt<List<QuizAttemptDTO>>();

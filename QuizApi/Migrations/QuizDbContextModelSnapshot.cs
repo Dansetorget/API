@@ -304,6 +304,9 @@ namespace QuizApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("FirstAttempt")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Points")
                         .HasColumnType("INTEGER");
 
