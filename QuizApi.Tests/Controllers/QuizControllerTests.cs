@@ -16,137 +16,104 @@ namespace QuizApi.Tests.Controllers;
 // Testing CRUD operations for QuizController
 public class QuizControllerTests
 {
-    // Method to create controller with mocked dependencies
-    private QuizController CreateController(Mock<IQuizRepository> mockRepo = null!)
+    // Private mocks at the top
+    private readonly Mock<IQuizRepository> _repoMock = new();
+    private readonly Mock<ILogger<QuizController>> _loggerMock = new();
+    private readonly Mock<UserManager<AuthUser>> _userManagerMock;
+    private readonly QuizController _controller;
+
+    public QuizControllerTests()
     {
-        mockRepo ??= new Mock<IQuizRepository>();
-        var mockLogger = new Mock<ILogger<QuizController>>();
-
-        // Mock UserManager
+        // Minimal UserManager mock
         var store = new Mock<IUserStore<AuthUser>>();
-
-        var mockUserManager = new Mock<UserManager<AuthUser>>(
+        _userManagerMock = new Mock<UserManager<AuthUser>>(
             store.Object,
-            Options.Create(new IdentityOptions()),   // IOptions<IdentityOptions>
-            new Mock<IPasswordHasher<AuthUser>>().Object,
-            new IUserValidator<AuthUser>[0],
-            new IPasswordValidator<AuthUser>[0],
-            new UpperInvariantLookupNormalizer(),
-            new IdentityErrorDescriber(),
-            null!,  // IServiceProvider
-            new Mock<ILogger<UserManager<AuthUser>>>().Object
+            null!, null!, null!, null!, null!, null!, null!, null!
         );
 
-        var controller = new QuizController(mockRepo.Object, mockLogger.Object, mockUserManager.Object);
+        _controller = new QuizController(_repoMock.Object, _loggerMock.Object, _userManagerMock.Object);
 
-        // Mock authenticated user
-        var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+        // Default authenticated user
+        var identity = new ClaimsIdentity(new[]
         {
             new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "testuser")
-        }, "mock"));
+        }, "mockAuth");
 
-        controller.ControllerContext = new ControllerContext()
+        _controller.ControllerContext = new ControllerContext
         {
-            HttpContext = new DefaultHttpContext() { User = user }
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(identity)
+            }
         };
-
-        return controller;
     }
 
     // Test for CreateQuiz
     [Fact]
-
-    public async Task CreateQuiz_ShouldReturnCreatedAtActionResult_WithCorrectQuiz_WhenQuizIsCreated()
+    public async Task CreateQuiz_ShouldReturnCreatedAtAction_WithMappedQuiz()
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
-        var mockLogger = new Mock<ILogger<QuizController>>();
         var controller = CreateController(mockRepo);
 
-        var quizDto = new CreateQuizDTO
+        var dto = new CreateQuizDTO
         {
             Title = "Geography",
-            Questions = new List<CreateQuestionDTO>
+            Questions = new()
         {
-            new CreateQuestionDTO
+            new()
             {
                 QuestionText = "What is the capital of France?",
-                Answers = new List<CreateAnswerDTO>
+                Answers = new()
                 {
-                    new CreateAnswerDTO { AnswerText = "Paris", IsCorrect = true },
-                    new CreateAnswerDTO { AnswerText = "London", IsCorrect = false }
+                    new() { AnswerText = "Paris", IsCorrect = true },
+                    new() { AnswerText = "London", IsCorrect = false }
                 }
             }
         }
         };
 
+        Quiz? captured = null;
 
-        Quiz? capturedQuiz = null;
-
-        // Setup repo: return true and capture the created quiz
         mockRepo.Setup(r => r.Create(It.IsAny<Quiz>()))
-                .Callback<Quiz>(q =>
-                {
-                    capturedQuiz = q;
-                    q.Id = 1; // set Id for questions
-                              // Set Ids for questions and answers
-                    if (q.Questions != null)
-                    {
-                        int qId = 1;
-                        int aId = 1;
-                        foreach (var question in q.Questions)
-                        {
-                            question.Id = qId++;
-                            if (question.Answers != null)
-                            {
-                                foreach (var answer in question.Answers)
-                                {
-                                    answer.Id = aId++;
-                                }
-                            }
-                        }
-                    }
-                })
+                .Callback<Quiz>(q => captured = q)
                 .ReturnsAsync(true);
 
         // Act
-        var result = await controller.CreateQuiz(quizDto);
+        var result = await controller.CreateQuiz(dto);
 
         // Assert
-        // 1. Result should be CreatedAtActionResult
-        var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var returned = Assert.IsType<QuizDTO>(created.Value);
 
-        // 2. Result value should be a Quiz
-        var returnedQuiz = Assert.IsType<QuizDTO>(createdAtActionResult.Value);
+        // Validate basic fields
+        Assert.Equal(dto.Title, returned.Title);
+        Assert.Equal(dto.Questions.Count, returned.Questions.Count);
 
-        // 3. Quiz should have correct content
-        Assert.Equal(quizDto.Title, returnedQuiz.Title);
+        // Validate first question/answers
+        var qDto = dto.Questions[0];
+        var qReturned = returned.Questions[0];
 
-        // Questions
-        Assert.Equal(quizDto.Questions.Count, returnedQuiz.Questions.Count);
-        for (int i = 0; i < quizDto.Questions.Count; i++)
-        {
-            Assert.Equal(quizDto.Questions[i].QuestionText, returnedQuiz.Questions[i].QuestionText);
+        Assert.Equal(qDto.QuestionText, qReturned.QuestionText);
+        Assert.Equal(qDto.Answers.Count, qReturned.Answers.Count);
 
-            // Answers
-            Assert.Equal(quizDto.Questions[i].Answers.Count, returnedQuiz.Questions[i].Answers.Count);
-            for (int j = 0; j < quizDto.Questions[i].Answers.Count; j++)
-            {
-                Assert.Equal(quizDto.Questions[i].Answers[j].AnswerText, returnedQuiz.Questions[i].Answers[j].AnswerText);
-                Assert.Equal(quizDto.Questions[i].Answers[j].IsCorrect, returnedQuiz.Questions[i].Answers[j].IsCorrect);
-            }
-        }
-        // 4. Repo Create should have been called once
+        // Validate an answer
+        Assert.Equal(qDto.Answers[0].AnswerText, qReturned.Answers[0].AnswerText);
+        Assert.Equal(qDto.Answers[0].IsCorrect, qReturned.Answers[0].IsCorrect);
+
+        // Repo should be called once
         mockRepo.Verify(r => r.Create(It.IsAny<Quiz>()), Times.Once);
 
-        // 5. Captured quiz should have correct title
-        Assert.Equal(quizDto.Title, capturedQuiz!.Title);
+        // Ensure title was correctly mapped into entity
+        Assert.Equal(dto.Title, captured!.Title);
     }
+
+    // 
 
     // Negative test for CreateQuiz
     [Fact]
-    public async Task CreateQuiz_ShouldReturn500_WhenReposFails()
+    public async Task CreateQuiz_ShouldReturn500_WhenRepositoryFails()
     {
         // Arrange
         var mockRepo = new Mock<IQuizRepository>();
@@ -272,7 +239,68 @@ public class QuizControllerTests
         Assert.Equal("Updated Quiz Title", capturedQuiz.Title);
     }
 
-    // Negative test for update quiz
+    /* Negative tests for update quiz */
+    // Test for unauthorized update
+    [Fact]
+    public async Task UpdateQuiz_ShouldReturnUnauthorized_WhenUserIsNotAuthenticated()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        // No user identity
+        controller.ControllerContext.HttpContext.User =
+            new ClaimsPrincipal(new ClaimsIdentity());
+
+        var dto = new QuizDTO { Id = 1, Title = "Test" };
+
+        // Act
+        var result = await controller.UpdateQuiz(1, dto);
+
+        // Assert
+        Assert.IsType<UnauthorizedObjectResult>(result);
+        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
+    }
+
+
+    // Test for id mismatch
+    [Fact]
+    public async Task UpdateQuiz_ShouldReturnBadRequest_WhenIdMismatch()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        var dto = new QuizDTO { Id = 2, Title = "Test" };
+
+        // Act
+        var result = await controller.UpdateQuiz(1, dto);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
+        mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
+    }
+
+    // Test for quiz not found
+    [Fact]
+    public async Task UpdateQuiz_ShouldReturnNotFound_WhenQuizNotFound()
+    {
+        // Arrange
+        var mockRepo = new Mock<IQuizRepository>();
+        var controller = CreateController(mockRepo);
+
+        mockRepo.Setup(r => r.GetQuizById(1)).ReturnsAsync((Quiz)null!);
+
+        var dto = new QuizDTO { Id = 1, Title = "Test" };
+
+        // Act
+        var result = await controller.UpdateQuiz(1, dto);
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    // Test for forbidden update
     [Fact]
     public async Task UpdateQuiz_ShouldReturnForbid_WhenUserDoesNotOwnQuiz()
     {
@@ -280,30 +308,25 @@ public class QuizControllerTests
         var mockRepo = new Mock<IQuizRepository>();
         var controller = CreateController(mockRepo);
 
-        var quizDto = new QuizDTO
+        mockRepo.Setup(r => r.GetQuizById(1)).ReturnsAsync(new Quiz
         {
             Id = 1,
-            Title = "Updated Title"
-        };
+            OwnerId = "999"
+        });
 
-        // Quiz exists, but its OwnerId does NOT match authenticated user ("1")
-        mockRepo.Setup(r => r.GetQuizById(1))
-                .ReturnsAsync(new Quiz
-                {
-                    Id = 1,
-                    OwnerId = "999"   // <-- Not owned by the logged-in user
-                });
+        var dto = new QuizDTO { Id = 1, Title = "Updated" };
 
         // Act
-        var result = await controller.UpdateQuiz(1, quizDto);
+        var result = await controller.UpdateQuiz(1, dto);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
-
-        // Ensure Update() was never called
         mockRepo.Verify(r => r.Update(It.IsAny<Quiz>()), Times.Never);
     }
 
+    /* End of Negative test for update quiz */
+
+    /* Delete quiz tests */
     // Test for delete quiz
     [Fact]
     public async Task DeleteQuiz_ShouldReturnNoContent_WhenDeletionIsSuccessful()
@@ -363,5 +386,46 @@ public class QuizControllerTests
         // Ensure Delete() was never called
         mockRepo.Verify(r => r.Delete(1), Times.Never);
     }
+
+    /* End of delete quiz tests */
+
+    /* Helper method */
+    // Method to create controller with mocked dependencies
+    private QuizController CreateController(Mock<IQuizRepository> repoMock = null!)
+    {
+        repoMock ??= new Mock<IQuizRepository>();
+
+        var logger = new Mock<ILogger<QuizController>>();
+
+        // Minimal UserManager mock (constructor requires it)
+        var store = new Mock<IUserStore<AuthUser>>();
+        var userManager = new Mock<UserManager<AuthUser>>(
+            store.Object,
+            null!, null!, null!, null!, null!, null!, null!, null!
+        );
+
+        var controller = new QuizController(repoMock.Object, logger.Object, userManager.Object);
+
+        // Default authenticated user
+        var identity = new ClaimsIdentity(
+            new[]
+            {
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim(ClaimTypes.Name, "testuser")
+            },
+            "mockAuth"
+        );
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(identity)
+            }
+        };
+
+        return controller;
+    }
+
 
 }
