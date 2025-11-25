@@ -153,7 +153,8 @@ namespace QuizApi.Controllers
             var userInfo = currentUser.Adapt<UserInfoDTO>();
             userInfo.Roles = roles.ToList();
             userInfo.AvatarId = currentUser.AvatarId ?? 0;
-            userInfo.AvatarUrl = currentUser.AvatarId.HasValue ? $"/avatars/{currentUser.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            userInfo.AvatarUrl = currentUser.AvatarId.HasValue ? $"{baseUrl}/avatars/{currentUser.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
             return Ok(userInfo);
         }
 
