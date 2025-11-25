@@ -3,12 +3,12 @@ using System.Security.Claims;
 using System.Text;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using QuizApi.DTOs;
 using QuizApi.Models;
-using Microsoft.AspNetCore.Http;
 
 namespace QuizApi.Controllers
 {
@@ -267,31 +267,6 @@ namespace QuizApi.Controllers
             return Ok(new { Message = "Password changed successfully" });
         }
 
-        // Delete user account
-        [Authorize]
-        [HttpDelete("deleteaccount")]
-        public async Task<IActionResult> DeleteAccount()
-        {
-            // Get the current user
-            var (user, userId, error) = await GetCurrentUser();
-            if (error != null) return error;
-            var currentUser = user!; // Already checked for null above
-
-            // Delete the user account
-            var result = await _userManager.DeleteAsync(currentUser);
-            if (!result.Succeeded)
-            {
-                _logger.LogWarning("[AuthController] Account deletion failed for {Username}", currentUser.UserName);
-                return BadRequest(new
-                {
-                    Errors = result.Errors.Select(e => e.Description)
-                });
-            }
-
-            _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", currentUser.UserName);
-            return Ok(new { Message = "Account deleted successfully" });
-        }
-
         [Authorize]
         [HttpPatch("changeavatar")]
         public async Task<IActionResult> SetAvatar([FromBody] int avatarId)
@@ -322,6 +297,33 @@ namespace QuizApi.Controllers
             _logger.LogInformation("Avatar changed successfully for {Username}", currentUser.UserName);
             return Ok(new { Message = "Avatar changed successfully" });
         }
+
+        // Delete user account
+        [Authorize]
+        [HttpDelete("deleteaccount")]
+        public async Task<IActionResult> DeleteAccount()
+        {
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            // Delete the user account
+            var result = await _userManager.DeleteAsync(currentUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("[AuthController] Account deletion failed for {Username}", currentUser.UserName);
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", currentUser.UserName);
+            return Ok(new { Message = "Account deleted successfully" });
+        }
+
+
 
         // Helper method for getting the current user
         private async Task<(AuthUser? user, string? UserId, IActionResult? error)> GetCurrentUser()
