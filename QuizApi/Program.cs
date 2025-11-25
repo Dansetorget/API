@@ -12,7 +12,6 @@ using Serilog;
 using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("ItemDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ItemDbContextConnection' not found.");
 
 // ===== Configuration & Logging =====
 var loggerConfiguration = new LoggerConfiguration()
@@ -193,6 +192,7 @@ using (var scope = app.Services.CreateScope())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("CorsPolicy");
+app.UseStaticFiles();
 
 // Custom middleware that manually inspect the JWT token for debugging purposes
 // If you encounter bugs, you can comment this in

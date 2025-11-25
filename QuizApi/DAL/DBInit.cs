@@ -13,8 +13,6 @@ public static class DBInit
         QuizDbContext context = serviceScope.ServiceProvider.GetRequiredService<QuizDbContext>();
         var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
         var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        context.Database.EnsureDeleted();
-        context.Database.EnsureCreated();
 
         var admin = await userManager.FindByNameAsync("admin");
         if (admin == null)
@@ -22,7 +20,8 @@ public static class DBInit
             admin = new AuthUser
             {
                 UserName = "admin",
-                Email = "dansetorget@gmail.com"
+                Email = "dansetorget@gmail.com",
+                AvatarId = 6
             };
 
             var createResult = await userManager.CreateAsync(admin, "Dansetorget123!");

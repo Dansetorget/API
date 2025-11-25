@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -62,19 +63,19 @@ namespace QuizApi.Controllers
 
             if (user == null)
             {
-                _logger.LogWarning("[AuthController] Login failed (no such user) for {Username}", loginDto.Username);
+                _logger.LogWarning("Login failed (no such user) for {Username}", loginDto.Username);
                 return Unauthorized(new { Message = "Invalid credentials" });
             }
 
             var valid = await _userManager.CheckPasswordAsync(user, loginDto.Password); // Check if the provided password is correct
             if (!valid)
             {
-                _logger.LogWarning("[AuthController] Login failed (invalid password) for {Username}", loginDto.Username);
+                _logger.LogWarning("Login failed (invalid password) for {Username}", loginDto.Username);
                 return Unauthorized(new { Message = "Invalid credentials" });
             }
 
             var token = await GenerateJwtTokenAsync(user);
-            _logger.LogInformation("[AuthController] Login success for {Username}", loginDto.Username);
+            _logger.LogInformation("Login success for {Username}", loginDto.Username);
             return Ok(new { Token = token }); // Return the JWT token to the client on successful login
 
         }
@@ -142,64 +143,21 @@ namespace QuizApi.Controllers
         [HttpGet("userinfo")]
         public async Task<IActionResult> GetUserInfo()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the user ID from the JWT claims
-            if (userId == null)
-            {
-                return NotFound("No logged-in user found.");
-            }
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
 
-            var user = await _userManager.FindByIdAsync(userId); // Find the user by ID
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-            var roles = await _userManager.GetRolesAsync(user); // Get the user's roles
+            var roles = await _userManager.GetRolesAsync(currentUser); // Get the user's roles
 
-            var userInfo = user.Adapt<UserInfoDTO>();
+            var userInfo = currentUser.Adapt<UserInfoDTO>();
             userInfo.Roles = roles.ToList();
-
+            userInfo.AvatarId = currentUser.AvatarId ?? 0;
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            userInfo.AvatarUrl = currentUser.AvatarId.HasValue ? $"{baseUrl}/avatars/{currentUser.AvatarId}.svg" : null; // Frontend uses this url to display the avatar
             return Ok(userInfo);
         }
 
-
-        // Endpoint for changing password
-        // Patch api/Auth/changepassword
-        [Authorize]
-        [HttpPatch("changepassword")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
-            {
-                return Unauthorized("No logged-in user found.");
-            }
-
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Unauthorized("User not found.");
-            }
-
-            var result = await _userManager.ChangePasswordAsync(
-                user,
-                changePasswordDto.CurrentPassword,
-                changePasswordDto.NewPassword
-            );
-
-            if (!result.Succeeded)
-            {
-                _logger.LogWarning("[AuthController] Password change failed for {Username}", user.UserName);
-
-                return BadRequest(new
-                {
-                    Errors = result.Errors.Select(e => e.Description)
-                });
-            }
-
-            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", user.UserName);
-
-            return Ok(new { Message = "Password changed successfully" });
-        }
 
         // Endpoint for changing username
         // Patch api/Auth/changeusername
@@ -272,6 +230,69 @@ namespace QuizApi.Controllers
 
         }
 
+        // Endpoint for changing password
+        // Patch api/Auth/changepassword
+        [Authorize]
+        [HttpPatch("changepassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDto)
+        {
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            var result = await _userManager.ChangePasswordAsync(
+                currentUser,
+                changePasswordDto.CurrentPassword,
+                changePasswordDto.NewPassword
+            );
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("[AuthController] Password change failed for {Username}", currentUser.UserName);
+
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("[AuthController] Password changed successfully for {Username}", currentUser.UserName);
+
+            return Ok(new { Message = "Password changed successfully" });
+        }
+
+        [Authorize]
+        [HttpPatch("changeavatar")]
+        public async Task<IActionResult> SetAvatar([FromBody] int avatarId)
+        {
+            // Validate avatarId is in valid range (1-5 for regular users)
+            if (avatarId < 1 || avatarId > 5)
+            {
+                return BadRequest("Avatar ID must be between 1 and 5.");
+            }
+
+            // Get the current user
+            var (user, userId, error) = await GetCurrentUser();
+            if (error != null) return error;
+            var currentUser = user!; // Already checked for null above
+
+            currentUser.AvatarId = avatarId;
+
+            var result = await _userManager.UpdateAsync(currentUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Avatar change failed for {Username}", currentUser.UserName);
+                return BadRequest(new
+                {
+                    Errors = result.Errors.Select(e => e.Description)
+                });
+            }
+
+            _logger.LogInformation("Avatar changed successfully for {Username}", currentUser.UserName);
+            return Ok(new { Message = "Avatar changed successfully" });
+        }
+
         // Delete user account
         [Authorize]
         [HttpDelete("deleteaccount")]
@@ -296,6 +317,8 @@ namespace QuizApi.Controllers
             _logger.LogInformation("[AuthController] Account deleted successfully for {Username}", currentUser.UserName);
             return Ok(new { Message = "Account deleted successfully" });
         }
+
+
 
         // Helper method for getting the current user
         private async Task<(AuthUser? user, string? UserId, IActionResult? error)> GetCurrentUser()
