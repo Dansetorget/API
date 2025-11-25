@@ -8,6 +8,7 @@ using QuizApi.DAL;
 using QuizApi.DTOs;
 using QuizApi.Models;
 
+
 namespace QuizApi.Controllers
 {
     [Route("api/Quiz")]
@@ -17,6 +18,7 @@ namespace QuizApi.Controllers
         private readonly IQuizRepository _quizRepository;
         private readonly ILogger<QuizController> _logger;
         private readonly UserManager<AuthUser> _userManager;
+
 
 
         public QuizController(IQuizRepository quizRepository, ILogger<QuizController> logger, UserManager<AuthUser> userManager)
@@ -155,10 +157,9 @@ namespace QuizApi.Controllers
                 return Ok(new { message = "No attempts from logged in users found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
             }
 
-
             var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
 
-            // Add usernames
+            // Add user info to each attempt
             for (int i = 0; i < attemptDtos.Count; i++)
             {
                 var user = await _userManager.FindByIdAsync(filteredAttempts[i]!.UserId);
