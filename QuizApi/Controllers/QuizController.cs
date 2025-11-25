@@ -105,10 +105,17 @@ namespace QuizApi.Controllers
             }
 
             var attempt = model.Adapt<QuizAttempt>();
+            var quiz = await _quizRepository.GetQuizById(attempt.QuizId);
+            if (quiz == null)
+            {
+                return NotFound("Quiz not found");
+            }
+
             attempt.UserId = userId!; // Can be null for anonymous users;
             _logger.LogInformation($"[QuizController] Saving quiz attempt for QuizId {attempt.QuizId} by UserId {attempt.UserId}");
 
-            if (userId != null)
+            // The creater of the quiz do not appear on the leaderboard
+            if (userId != null && userId != quiz.OwnerId)
             {
                 // Check if this is the user's first attempt for this quiz
                 var previousAttempts = await _quizRepository.GetQuizAttemptsByUser(attempt.QuizId, userId);
@@ -151,7 +158,7 @@ namespace QuizApi.Controllers
 
 
             var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
-            Console.WriteLine($"Filtered attempts: {filteredAttempts.ToString}");
+
             // Add usernames
             for (int i = 0; i < attemptDtos.Count; i++)
             {
