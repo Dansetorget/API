@@ -14,6 +14,7 @@ public class QuizAttempt
     // Additional properties
     public int Points { get; set; }
     public int TimeTaken { get; set; }
+    public bool FirstAttempt { get; set; }
 
     // Navigation properties
     public virtual Quiz? Quiz { get; set; } = default;

@@ -13,4 +13,5 @@ public class QuizAttemptDTO
     public string UserName { get; set; } = string.Empty;
     public int Points { get; set; }
     public int TimeTaken { get; set; }
+    public bool FirstAttempt { get; set; }
 }

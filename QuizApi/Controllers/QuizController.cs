@@ -106,8 +106,18 @@ namespace QuizApi.Controllers
 
             var attempt = model.Adapt<QuizAttempt>();
             attempt.UserId = userId!; // Can be null for anonymous users;
-            Console.WriteLine($"Saving quiz attempt for QuizId {attempt.QuizId} by UserId {attempt.UserId}");
+            _logger.LogInformation($"[QuizController] Saving quiz attempt for QuizId {attempt.QuizId} by UserId {attempt.UserId}");
 
+            if (userId != null)
+            {
+                // Check if this is the user's first attempt for this quiz
+                var previousAttempts = await _quizRepository.GetQuizAttemptsByUser(attempt.QuizId, userId);
+                attempt.FirstAttempt = !previousAttempts.Any();
+            }
+            else
+            {
+                attempt.FirstAttempt = false; // Anonymous users cannot have first attempts tracked
+            }
 
             var saveSuccess = await _quizRepository.SaveQuizAttempt(attempt);
             if (!saveSuccess)
@@ -131,14 +141,22 @@ namespace QuizApi.Controllers
                 return Ok(new { message = "No quiz attempts found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
             }
 
+            var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
 
-            var count = 0;
-            var attemptDtos = attempts.Adapt<List<QuizAttemptDTO>>();
-            foreach (var dto in attemptDtos)
+            if (!filteredAttempts.Any())
             {
-                var user = await _userManager.FindByIdAsync(attempts.ElementAt(count)!.UserId);
-                dto.UserName = user != null ? user.UserName ?? "Unknown" : "Anonymous";
-                count++;
+                // Guests can take quizzes, but we do not track their attempts
+                return Ok(new { message = "No attempts from logged in users found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
+            }
+
+
+            var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
+            Console.WriteLine($"Filtered attempts: {filteredAttempts.ToString}");
+            // Add usernames
+            for (int i = 0; i < attemptDtos.Count; i++)
+            {
+                var user = await _userManager.FindByIdAsync(filteredAttempts[i]!.UserId);
+                attemptDtos[i].UserName = user?.UserName ?? "Unknown";
             }
 
             return Ok(attemptDtos);
