@@ -63,7 +63,7 @@ namespace QuizApi.Controllers
             // Basic validation to ensure we have a quiz id to work with.
             if (model == null || model.QuizId <= 0)
             {
-                return BadRequest("Invalid submission");
+                return BadRequest("Invalid quiz attempt submission");
             }
 
             // Update streak for logged in user
@@ -133,7 +133,7 @@ namespace QuizApi.Controllers
                 return StatusCode(500, "Failed to save quiz attempt");
             }
 
-            return Ok(new { message = "Quiz attempt saved successfully" });
+            return Ok("Quiz attempt saved successfully");
         }
 
         // GET: api/Quiz/results/5
@@ -141,11 +141,11 @@ namespace QuizApi.Controllers
         [HttpGet("results/{quizId}")]
         public async Task<IActionResult> GetQuizResults(int quizId)
         {
-            // Fetch quiz attempts for the given quizId and userId
+            // Fetch quiz attempts for the given quizId
             var attempts = await _quizRepository.GetQuizAttempts(quizId);
             if (attempts == null || !attempts.Any())
             {
-                return Ok(new { message = "No quiz attempts found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
+                return Ok("No quiz attempts found for this quiz.");
             }
 
             var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
@@ -153,7 +153,7 @@ namespace QuizApi.Controllers
             if (!filteredAttempts.Any())
             {
                 // Guests can take quizzes, but we do not track their attempts
-                return Ok(new { message = "No attempts from logged in users found for this quiz.", attempts = (List<QuizAttemptDTO>?)null });
+                return Ok("No attempts from logged in users found for this quiz.");
             }
 
 
@@ -179,7 +179,7 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("Brukeridentitet mangler.");
+                return Unauthorized("User missing.");
             }
 
             var ownerId = userId; // Only allow fetching own quizzes
@@ -205,8 +205,10 @@ namespace QuizApi.Controllers
             try
             {
                 var quizzes = await _quizRepository.GetAll();
-                var quizDtos = quizzes.Adapt<List<QuizDTO>>();
-                return Ok(quizDtos);
+                if (quizzes == null || !quizzes.Any())
+                    return NoContent();
+
+                return Ok(quizzes.Adapt<List<QuizDTO>>());
 
             }
             catch (Exception e)
