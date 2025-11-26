@@ -1,12 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
 
 namespace QuizApi.DTOs;
 
 public class QuizDTO
 {
     public int Id { get; set; } = 0;
-    [Required(ErrorMessage = "Title is required.")]
+
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public DateTime? CreatedAt { get; set; }
@@ -17,9 +16,8 @@ public class QuizDTO
 public class QuestionDTO
 {
     public int Id { get; set; } = 0;
-    [Required(ErrorMessage = "Spørsmålstekst er påkrevd.")]
+
     public string QuestionText { get; set; } = string.Empty;
-    [Range(1, 100, ErrorMessage = "Poeng må være mellom 1 og 100.")] // Hvor mange poeng skal vi ha?
     public int Points { get; set; }
     public List<AnswerDTO> Answers { get; set; } = new();
 }
@@ -27,15 +25,13 @@ public class QuestionDTO
 public class AnswerDTO
 {
     public int Id { get; set; } = 0;
-    [Required(ErrorMessage = "Svar er påkrevd.")]
-    [StringLength(250, ErrorMessage = "Svartekst kan ikke være lengre enn 250 tegn.")]
     public string AnswerText { get; set; } = string.Empty;
     public bool IsCorrect { get; set; }
 }
 
 public class CreateQuizDTO
 {
-    [Required(ErrorMessage = "Tittel er påkrevd")]
+    [Required(ErrorMessage = "Title is required.")]
     public string Title { get; set; } = string.Empty;
 
     // Description can be optional, but if provided, it should not be empty
@@ -46,10 +42,10 @@ public class CreateQuizDTO
 
 public class CreateQuestionDTO
 {
-    [Required(ErrorMessage = "Spørsmålstekst er påkrevd.")]
+    [Required(ErrorMessage = "Question text is required.")]
     public string QuestionText { get; set; } = string.Empty;
 
-    [Range(1, 100, ErrorMessage = "Poeng må være mellom 1 og 100.")]
+    [Range(1, 100, ErrorMessage = "Points must be in range 1 to 100")]
     public int Points { get; set; }
 
     public List<CreateAnswerDTO> Answers { get; set; } = new();
@@ -57,8 +53,8 @@ public class CreateQuestionDTO
 
 public class CreateAnswerDTO
 {
-    [Required(ErrorMessage = "Svar er påkrevd.")]
-    [StringLength(250, ErrorMessage = "Svartekst kan ikke være lengre enn 250 tegn.")]
+    [Required(ErrorMessage = "Answer text is required.")]
+    [StringLength(250, ErrorMessage = "Answer text cannot exceed 250 words.")]
     public string AnswerText { get; set; } = string.Empty;
 
     public bool IsCorrect { get; set; }
