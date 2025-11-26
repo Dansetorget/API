@@ -90,7 +90,6 @@ public class QuizRepository : IQuizRepository
             var attempts = await _db.QuizAttempts
                 .Where(qa => qa.QuizId == quizId)
                 .ToListAsync();
-            Console.WriteLine($"Retrieved {attempts.Count} attempts for QuizId {quizId}");
             return attempts;
 
         }

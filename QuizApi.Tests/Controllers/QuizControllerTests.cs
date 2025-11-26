@@ -330,6 +330,28 @@ public class QuizControllerTests
         _mockRepo.Verify(r => r.GetQuizAttempts(quizId), Times.Once);
     }
 
+    // Negative test for read quiz attempts when databse error occurs
+    [Fact]
+    public async Task GetQuizResults_ShouldReturn500_WhenDatabaseErrorOccurs()
+    {
+        // Arrange
+        var quizId = 1;
+        var exceptionMessage = "Database error";
+
+        _mockRepo.Setup(r => r.GetQuizAttempts(quizId))
+                 .ThrowsAsync(new Exception(exceptionMessage));
+
+        // Act
+        var result = await _controller.GetQuizResults(quizId);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, objectResult.StatusCode);
+        Assert.Equal($"An error occurred: {exceptionMessage}", objectResult.Value);
+
+        _mockRepo.Verify(r => r.GetQuizAttempts(quizId), Times.Once);
+    }
+
     // Positive test for read quiz by owner
     [Fact]
     public async Task GetQuizzesByOwner_ShouldReturnOk_WithListOfQuizzes()

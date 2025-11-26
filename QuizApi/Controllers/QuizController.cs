@@ -141,32 +141,40 @@ namespace QuizApi.Controllers
         [HttpGet("results/{quizId}")]
         public async Task<IActionResult> GetQuizResults(int quizId)
         {
-            // Fetch quiz attempts for the given quizId
-            var attempts = await _quizRepository.GetQuizAttempts(quizId);
-            if (attempts == null || !attempts.Any())
+            try
             {
-                return Ok("No quiz attempts found for this quiz.");
+                // Fetch quiz attempts for the given quizId
+                var attempts = await _quizRepository.GetQuizAttempts(quizId);
+                if (!attempts.Any())
+                {
+                    return Ok("No quiz attempts found for this quiz.");
+                }
+
+                var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
+
+                if (!filteredAttempts.Any())
+                {
+                    // Guests can take quizzes, but we do not track their attempts
+                    return Ok("No attempts from logged in users found for this quiz.");
+                }
+
+
+                var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
+
+                // Add usernames
+                for (int i = 0; i < attemptDtos.Count; i++)
+                {
+                    var user = await _userManager.FindByIdAsync(filteredAttempts[i]!.UserId);
+                    attemptDtos[i].UserName = user?.UserName ?? "Unknown";
+                }
+
+                return Ok(attemptDtos);
             }
-
-            var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
-
-            if (!filteredAttempts.Any())
+            catch (Exception e)
             {
-                // Guests can take quizzes, but we do not track their attempts
-                return Ok("No attempts from logged in users found for this quiz.");
+                _logger.LogError("[QuizController] GetQuizResults: Error retrieving quiz results for QuizId {QuizId}. Exception: {ExceptionMessage}", quizId, e.Message);
+                return StatusCode(500, $"An error occurred: {e.Message}");
             }
-
-
-            var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
-
-            // Add usernames
-            for (int i = 0; i < attemptDtos.Count; i++)
-            {
-                var user = await _userManager.FindByIdAsync(filteredAttempts[i]!.UserId);
-                attemptDtos[i].UserName = user?.UserName ?? "Unknown";
-            }
-
-            return Ok(attemptDtos);
         }
 
 
