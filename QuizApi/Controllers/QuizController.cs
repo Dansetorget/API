@@ -178,24 +178,24 @@ namespace QuizApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
-            {
                 return Unauthorized("User missing.");
-            }
-
-            var ownerId = userId; // Only allow fetching own quizzes
 
             var isAdmin = User.IsInRole("Admin");
-            if (!isAdmin && !string.Equals(ownerId, userId, StringComparison.Ordinal))
+
+            var quizzes = await _quizRepository.GetByOwnerId(userId); // Fetch quizzes by ownerId
+
+            if (isAdmin)
             {
-                return Forbid(); // Forbid access if not admin and userid != ownerId
+                // Admin can see all quizzes
+                quizzes = await _quizRepository.GetAll();
             }
 
-            var quizzes = await _quizRepository.GetByOwnerId(ownerId); // Fetch quizzes by ownerId
+            if (quizzes == null || !quizzes.Any())
+                return Ok("No quizzes found for this owner.");
+
             var quizDtos = quizzes.Adapt<List<QuizDTO>>();
             return Ok(quizDtos);
         }
-
-
 
         // GET: api/Quiz
         // Returns all quizzes
@@ -206,7 +206,7 @@ namespace QuizApi.Controllers
             {
                 var quizzes = await _quizRepository.GetAll();
                 if (quizzes == null || !quizzes.Any())
-                    return NoContent();
+                    return Ok("No quizzes found.");
 
                 return Ok(quizzes.Adapt<List<QuizDTO>>());
 
@@ -306,7 +306,7 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("Brukeridentitet mangler.");
+                return Unauthorized("User missing.");
             }
 
             var quiz = await _quizRepository.GetQuizById(id);
@@ -325,7 +325,6 @@ namespace QuizApi.Controllers
 
             return NoContent();
         }
-
 
 
 
