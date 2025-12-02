@@ -252,7 +252,7 @@ public class QuizControllerTests
      --------------------------------------------*/
 
     /*--------------------------------------------- 
-    | Tests for Read, 9 positive, 3 negative
+    | Tests for Read, 9 positive, 4 negative
      --------------------------------------------*/
 
     // Positive test for read quiz attempts by quiz id
@@ -314,7 +314,9 @@ public class QuizControllerTests
         var attempts = new List<QuizAttempt>
         {
             new QuizAttempt { QuizId = quizId, Points = 5, TimeTaken = 300, FirstAttempt = false },
-            new QuizAttempt { QuizId = quizId, Points = 3, TimeTaken = 400, FirstAttempt = false }
+            new QuizAttempt { QuizId = quizId, Points = 3, TimeTaken = 400, FirstAttempt = false },
+            new QuizAttempt { QuizId = quizId, Points = 5, TimeTaken = 300, FirstAttempt = false, UserId = "999" },
+
         };
 
         _mockRepo.Setup(r => r.GetQuizAttempts(quizId)).ReturnsAsync(attempts);
@@ -471,7 +473,7 @@ public class QuizControllerTests
 
     // Positive test for read all quizzes, when no quizzes exist
     [Fact]
-    public async Task GetAllQuizzes_ShouldReturnNoContent_WhenNoQuizzesExist()
+    public async Task GetAllQuizzes_ShouldReturnOk_WhenNoQuizzesExist()
     {
         // Arrange
         _mockRepo.Setup(r => r.GetAll()).ReturnsAsync((IEnumerable<Quiz>?)null);
