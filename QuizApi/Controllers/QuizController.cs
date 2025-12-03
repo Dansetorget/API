@@ -134,7 +134,7 @@ namespace QuizApi.Controllers
                 return StatusCode(500, "Failed to save quiz attempt");
             }
 
-            return Ok("Quiz attempt saved successfully");
+            return Ok(new { Message = "Quiz attempt saved successfully" });
         }
 
         // GET: api/Quiz/results/5

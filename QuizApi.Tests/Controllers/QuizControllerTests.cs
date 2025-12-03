@@ -173,7 +173,7 @@ public class QuizControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal("Quiz attempt saved successfully", okResult.Value);
+        Assert.Equal("Quiz attempt saved successfully", okResult.Value!.GetType().GetProperty("Message")!.GetValue(okResult.Value));
 
         _mockRepo.Verify(r => r.SaveQuizAttempt(It.IsAny<QuizAttempt>()), Times.Once);
     }
