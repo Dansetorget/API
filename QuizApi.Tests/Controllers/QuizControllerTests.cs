@@ -327,7 +327,7 @@ public class QuizControllerTests
         // Assert
         var response = Assert.IsType<OkObjectResult>(result);
 
-        Assert.Equal("No attempts from logged in users found for this quiz.", response.Value);
+        Assert.Equal("No attempts from logged in users found for this quiz.", response.Value!.GetType().GetProperty("Message")!.GetValue(response.Value));
 
         _mockRepo.Verify(r => r.GetQuizAttempts(quizId), Times.Once);
     }
