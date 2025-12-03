@@ -39,10 +39,10 @@ When running in the Development environment, `DBInit.Seed` resets the quiz datab
 
 - `POST /api/Auth/register` – Register a new user.
 - `POST /api/Auth/login` – Obtain JWT token using email/password.
-- `GET /api/Quiz` – List quizzes.
-- `GET /api/Quiz/{id}` – Retrieve a quiz with questions and answers.
 - `POST /api/Quiz/createquiz` _(auth required)_ – Create a quiz (owner set from JWT).
 - `POST /api/Quiz/submit` – Submit quiz answers and receive a scored result.
+- `GET /api/Quiz/getquizzes` – List quizzes.
+- `GET /api/Quiz/{id}` – Retrieve a quiz with questions and answers.
 - `PATCH /api/Quiz/{id}` _(auth required)_ – Update a quiz.
 - `DELETE /api/Quiz/{id}` _(auth required)_ – Delete a quiz.
 
