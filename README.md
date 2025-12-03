@@ -10,15 +10,11 @@ Backend API for a quiz application built with ASP.NET Core 8.0. The service expo
 - JWT authentication & authorization
 - Mapster for object mapping
 
-## Getting Started
+## How to run
 
-1. **Install dependencies**
-   ```bash
-   dotnet restore
-   ```
-2. **Configure environment**
+1. **Configure environment**
    - Update connection strings and JWT settings in `QuizApi/appsettings.json` or `appsettings.Development.json`.
-3. **Run database migrations**
+2. **Run database migrations**
    ```bash
    dotnet ef database update --project QuizApi/QuizApi.csproj
    ```
@@ -39,10 +35,10 @@ When running in the Development environment, `DBInit.Seed` resets the quiz datab
 
 - `POST /api/Auth/register` – Register a new user.
 - `POST /api/Auth/login` – Obtain JWT token using email/password.
-- `GET /api/Quiz` – List quizzes.
-- `GET /api/Quiz/{id}` – Retrieve a quiz with questions and answers.
 - `POST /api/Quiz/createquiz` _(auth required)_ – Create a quiz (owner set from JWT).
 - `POST /api/Quiz/submit` – Submit quiz answers and receive a scored result.
+- `GET /api/Quiz/getquizzes` – List quizzes.
+- `GET /api/Quiz/{id}` – Retrieve a quiz with questions and answers.
 - `PATCH /api/Quiz/{id}` _(auth required)_ – Update a quiz.
 - `DELETE /api/Quiz/{id}` _(auth required)_ – Delete a quiz.
 

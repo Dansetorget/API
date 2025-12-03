@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Text;
 using Mapster;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -144,7 +143,7 @@ namespace QuizApi.Controllers
         public async Task<IActionResult> GetUserInfo()
         {
             // Get the current user
-            var (user, userId, error) = await GetCurrentUser();
+            var (user, _, error) = await GetCurrentUser();
             if (error != null) return error;
             var currentUser = user!; // Already checked for null above
 
