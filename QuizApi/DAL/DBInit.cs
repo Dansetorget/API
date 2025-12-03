@@ -20,11 +20,11 @@ public static class DBInit
             admin = new AuthUser
             {
                 UserName = "admin",
-                Email = "dansetorget@gmail.com",
+                Email = "admin@example.com",
                 AvatarId = 6
             };
 
-            var createResult = await userManager.CreateAsync(admin, "Dansetorget123!");
+            var createResult = await userManager.CreateAsync(admin, "Password123!");
             if (!createResult.Succeeded)
             {
                 throw new InvalidOperationException("Failed to create admin user for seeding quizzes.");
