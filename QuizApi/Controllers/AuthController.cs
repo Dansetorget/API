@@ -144,7 +144,7 @@ namespace QuizApi.Controllers
         public async Task<IActionResult> GetUserInfo()
         {
             // Get the current user
-            var (user, userId, error) = await GetCurrentUser();
+            var (user, _, error) = await GetCurrentUser();
             if (error != null) return error;
             var currentUser = user!; // Already checked for null above
 
