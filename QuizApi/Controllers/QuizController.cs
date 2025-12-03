@@ -109,7 +109,7 @@ namespace QuizApi.Controllers
             var quiz = await _quizRepository.GetQuizById(attempt.QuizId);
             if (quiz == null)
             {
-                return NotFound("Quiz not found");
+                return NotFound(new { Message = "Quiz not found" });
             }
 
             attempt.UserId = userId!; // Can be null for anonymous users;
