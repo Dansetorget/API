@@ -172,12 +172,12 @@ namespace QuizApi.Controllers
             // Check that new username is different from current username
             var newUsername = changeUsernameDto.NewUsername.Trim();
             if (string.Equals(newUsername, currentUser.UserName, StringComparison.OrdinalIgnoreCase))
-                return BadRequest("New username must be different from current username.");
+                return BadRequest(new { Message = "New username must be different from current username." });
 
             // Check if the new username is already taken
             var existing = await _userManager.FindByNameAsync(newUsername);
             if (existing != null)
-                return Conflict("Username already in use.");
+                return Conflict(new { Message = "Username already in use." });
 
             // Update the username
             var setNewUsername = await _userManager.SetUserNameAsync(currentUser, newUsername);
@@ -211,7 +211,7 @@ namespace QuizApi.Controllers
             // Check if the new email is already taken
             var existing = await _userManager.FindByEmailAsync(newEmail);
             if (existing != null)
-                return Conflict("Email already in use.");
+                return Conflict(new { Message = "Email already in use." });
 
             var setNewEmail = await _userManager.SetEmailAsync(currentUser, newEmail);
             if (!setNewEmail.Succeeded)
@@ -268,7 +268,7 @@ namespace QuizApi.Controllers
             // Validate avatarId is in valid range (1-5 for regular users)
             if (avatarId < 1 || avatarId > 5)
             {
-                return BadRequest("Avatar ID must be between 1 and 5.");
+                return BadRequest(new { Message = "Avatar ID must be between 1 and 5." });
             }
 
             // Get the current user
@@ -324,12 +324,11 @@ namespace QuizApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
-                return (null, null, Unauthorized("No logged-in user."));
+                return (null, null, Unauthorized( new { Message = "No logged-in user." }));
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
-                return (null, null, NotFound("User not found."));
-
+                return (null, null, NotFound(new { Message = "User not found." }));
             return (user, userId, null);
         }
     }

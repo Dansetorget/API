@@ -38,7 +38,7 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID from the JWT token
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
             }
 
             var quiz = createQuizDto.Adapt<Quiz>();
@@ -64,7 +64,7 @@ namespace QuizApi.Controllers
             // Basic validation to ensure we have a quiz id to work with.
             if (model == null || model.QuizId <= 0)
             {
-                return BadRequest("Invalid quiz attempt submission");
+                return BadRequest(new { Message = "Invalid quiz attempt submission" });
             }
 
             // Update streak for logged in user
@@ -134,7 +134,7 @@ namespace QuizApi.Controllers
                 return StatusCode(500, "Failed to save quiz attempt");
             }
 
-            return Ok("Quiz attempt saved successfully");
+            return Ok(new { Message = "Quiz attempt saved successfully" });
         }
 
         // GET: api/Quiz/results/5
@@ -148,7 +148,7 @@ namespace QuizApi.Controllers
                 var attempts = await _quizRepository.GetQuizAttempts(quizId);
                 if (!attempts.Any())
                 {
-                    return Ok("No quiz attempts found for this quiz.");
+                    return Ok(new { Message = "No quiz attempts found for this quiz." });
                 }
 
                 var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
@@ -156,7 +156,7 @@ namespace QuizApi.Controllers
                 if (!filteredAttempts.Any())
                 {
                     // Guests can take quizzes, but we do not track their attempts
-                    return Ok("No attempts from logged in users found for this quiz.");
+                    return Ok(new { Message = "No attempts from logged in users found for this quiz." });
                 }
 
 
@@ -190,7 +190,7 @@ namespace QuizApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
 
             var isAdmin = User.IsInRole("Admin");
 
@@ -203,7 +203,7 @@ namespace QuizApi.Controllers
             }
 
             if (quizzes == null || !quizzes.Any())
-                return Ok("No quizzes found for this owner.");
+                return Ok(new { Message = "No quizzes found for this owner." });
 
             var quizDtos = quizzes.Adapt<List<QuizDTO>>();
             return Ok(quizDtos);
@@ -218,7 +218,7 @@ namespace QuizApi.Controllers
             {
                 var quizzes = await _quizRepository.GetAll();
                 if (quizzes == null || !quizzes.Any())
-                    return Ok("No quizzes found.");
+                    return Ok(new { Message = "No quizzes found." });
 
                 return Ok(quizzes.Adapt<List<QuizDTO>>());
 
@@ -258,13 +258,13 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
             }
 
             if (id != quizDto.Id)
             {
                 _logger.LogWarning("ID mismatch in URL and body: {UrlId} vs {DtoId}", id, quizDto.Id);
-                return BadRequest("ID mismatch");
+                return BadRequest(new { Message = "ID mismatch" });
             }
 
             // Get existing quiz from database
@@ -318,7 +318,7 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
             }
 
             var quiz = await _quizRepository.GetQuizById(id);
