@@ -10,15 +10,11 @@ Backend API for a quiz application built with ASP.NET Core 8.0. The service expo
 - JWT authentication & authorization
 - Mapster for object mapping
 
-## Getting Started
+## How to run
 
-1. **Install dependencies**
-   ```bash
-   dotnet restore
-   ```
-2. **Configure environment**
+1. **Configure environment**
    - Update connection strings and JWT settings in `QuizApi/appsettings.json` or `appsettings.Development.json`.
-3. **Run database migrations**
+2. **Run database migrations**
    ```bash
    dotnet ef database update --project QuizApi/QuizApi.csproj
    ```
