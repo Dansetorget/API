@@ -258,13 +258,13 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
             }
 
             if (id != quizDto.Id)
             {
                 _logger.LogWarning("ID mismatch in URL and body: {UrlId} vs {DtoId}", id, quizDto.Id);
-                return BadRequest("ID mismatch");
+                return BadRequest(new { Message = "ID mismatch" });
             }
 
             // Get existing quiz from database
