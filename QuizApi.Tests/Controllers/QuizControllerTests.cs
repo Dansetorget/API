@@ -123,7 +123,7 @@ public class QuizControllerTests
 
         // Assert
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result.Result);
-        Assert.Equal("User missing.", unauthorized.Value);
+        Assert.Equal("User missing.", unauthorized.Value!.GetType().GetProperty("Message")!.GetValue(unauthorized.Value));
     }
 
     // Negative test for CreateQuiz
@@ -173,7 +173,7 @@ public class QuizControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal("Quiz attempt saved successfully", okResult.Value);
+        Assert.Equal("Quiz attempt saved successfully", okResult.Value!.GetType().GetProperty("Message")!.GetValue(okResult.Value));
 
         _mockRepo.Verify(r => r.SaveQuizAttempt(It.IsAny<QuizAttempt>()), Times.Once);
     }
@@ -190,7 +190,7 @@ public class QuizControllerTests
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Invalid quiz attempt submission", badRequestResult.Value);
+        Assert.Equal("Invalid quiz attempt submission", badRequestResult.Value!.GetType().GetProperty("Message")!.GetValue(badRequestResult.Value));
 
         _mockRepo.Verify(r => r.SaveQuizAttempt(It.IsAny<QuizAttempt>()), Times.Never);
     }
@@ -424,7 +424,7 @@ public class QuizControllerTests
 
         // Assert
         Assert.IsType<OkObjectResult>(result.Result);
-        Assert.Equal("No quizzes found for this owner.", ((OkObjectResult)result.Result).Value);
+        Assert.Equal("No quizzes found for this owner.", ((OkObjectResult)result.Result).Value!.GetType().GetProperty("Message")!.GetValue(((OkObjectResult)result.Result).Value));
 
         _mockRepo.Verify(r => r.GetByOwnerId(ownerId), Times.Once);
     }
@@ -441,7 +441,7 @@ public class QuizControllerTests
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result.Result);
-        Assert.Equal("User missing.", unauthorizedResult.Value);
+        Assert.Equal("User missing.", unauthorizedResult.Value!.GetType().GetProperty("Message")!.GetValue(unauthorizedResult.Value));
     }
 
     // Positive test for read all quizzes

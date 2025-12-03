@@ -38,7 +38,7 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID from the JWT token
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
             }
 
             var quiz = createQuizDto.Adapt<Quiz>();
@@ -64,7 +64,7 @@ namespace QuizApi.Controllers
             // Basic validation to ensure we have a quiz id to work with.
             if (model == null || model.QuizId <= 0)
             {
-                return BadRequest("Invalid quiz attempt submission");
+                return BadRequest(new { Message = "Invalid quiz attempt submission" });
             }
 
             // Update streak for logged in user
@@ -134,7 +134,7 @@ namespace QuizApi.Controllers
                 return StatusCode(500, "Failed to save quiz attempt");
             }
 
-            return Ok("Quiz attempt saved successfully");
+            return Ok(new { Message = "Quiz attempt saved successfully" });
         }
 
         // GET: api/Quiz/results/5
@@ -190,7 +190,7 @@ namespace QuizApi.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
 
             var isAdmin = User.IsInRole("Admin");
 
@@ -203,7 +203,7 @@ namespace QuizApi.Controllers
             }
 
             if (quizzes == null || !quizzes.Any())
-                return Ok("No quizzes found for this owner.");
+                return Ok(new { Message = "No quizzes found for this owner." });
 
             var quizDtos = quizzes.Adapt<List<QuizDTO>>();
             return Ok(quizDtos);
@@ -218,7 +218,7 @@ namespace QuizApi.Controllers
             {
                 var quizzes = await _quizRepository.GetAll();
                 if (quizzes == null || !quizzes.Any())
-                    return Ok("No quizzes found.");
+                    return Ok(new { Message = "No quizzes found." });
 
                 return Ok(quizzes.Adapt<List<QuizDTO>>());
 
@@ -318,7 +318,7 @@ namespace QuizApi.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Get the logged-in user ID
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User missing.");
+                return Unauthorized(new { Message = "User missing." });
             }
 
             var quiz = await _quizRepository.GetQuizById(id);
