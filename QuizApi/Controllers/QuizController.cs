@@ -148,7 +148,7 @@ namespace QuizApi.Controllers
                 var attempts = await _quizRepository.GetQuizAttempts(quizId);
                 if (!attempts.Any())
                 {
-                    return Ok("No quiz attempts found for this quiz.");
+                    return Ok(new { Message = "No quiz attempts found for this quiz." });
                 }
 
                 var filteredAttempts = attempts.Where(a => a!.FirstAttempt).ToList();
@@ -156,7 +156,7 @@ namespace QuizApi.Controllers
                 if (!filteredAttempts.Any())
                 {
                     // Guests can take quizzes, but we do not track their attempts
-                    return Ok("No attempts from logged in users found for this quiz.");
+                    return Ok(new { Message = "No attempts from logged in users found for this quiz." });
                 }
 
 
