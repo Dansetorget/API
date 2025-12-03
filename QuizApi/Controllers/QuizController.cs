@@ -162,11 +162,14 @@ namespace QuizApi.Controllers
 
                 var attemptDtos = filteredAttempts.Adapt<List<QuizAttemptDTO>>();
 
-                // Add usernames
+                // Add usernames and avatar URLs for each attempt
                 for (int i = 0; i < attemptDtos.Count; i++)
                 {
                     var user = await _userManager.FindByIdAsync(filteredAttempts[i]!.UserId);
                     attemptDtos[i].UserName = user?.UserName ?? "Unknown";
+                    attemptDtos[i].AvatarUrl = (user?.AvatarId.HasValue == true)
+                        ? $"/avatars/{user.AvatarId}.svg"
+                        : string.Empty;
                 }
 
                 return Ok(attemptDtos);

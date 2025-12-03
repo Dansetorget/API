@@ -6,7 +6,7 @@ Backend API for a quiz application built with ASP.NET Core 8.0. The service expo
 
 - ASP.NET Core 8
 - Entity Framework Core with SQLite
-- ASP.NET Identity (separate Auth DB)
+- ASP.NET Identity (unified context)
 - JWT authentication & authorization
 - Mapster for object mapping
 
@@ -26,13 +26,13 @@ Backend API for a quiz application built with ASP.NET Core 8.0. The service expo
    ```bash
    dotnet run --project QuizApi/QuizApi.csproj
    ```
-   Swagger UI is available in development at `https://localhost:7054/swagger`.
+   Swagger UI is available in development at `http://localhost:5110/swagger`.
 
 ## Seeding Data
 
 When running in the Development environment, `DBInit.Seed` resets the quiz database and:
 
-- Creates a default `Admin` (`dansetorget@gmail.com`, password `Dansetorget123!`).
+- Creates a default `Admin` (`admin@example.com`, password `Password123!`).
 - Inserts sample quizzes owned by that user.
 
 ## Key Endpoints
@@ -41,10 +41,10 @@ When running in the Development environment, `DBInit.Seed` resets the quiz datab
 - `POST /api/Auth/login` – Obtain JWT token using email/password.
 - `GET /api/Quiz` – List quizzes.
 - `GET /api/Quiz/{id}` – Retrieve a quiz with questions and answers.
-- `POST /api/Quiz` _(auth required)_ – Create a quiz (owner set from JWT).
+- `POST /api/Quiz/createquiz` _(auth required)_ – Create a quiz (owner set from JWT).
+- `POST /api/Quiz/submit` – Submit quiz answers and receive a scored result.
 - `PATCH /api/Quiz/{id}` _(auth required)_ – Update a quiz.
 - `DELETE /api/Quiz/{id}` _(auth required)_ – Delete a quiz.
-- `POST /api/Quiz/submit` – Submit quiz answers and receive a scored result.
 
 Authorization headers should use the `Bearer <token>` convention.
 
