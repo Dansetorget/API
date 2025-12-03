@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Mapster;
 using QuizApi.DTOs;
 using QuizApi.Models;
