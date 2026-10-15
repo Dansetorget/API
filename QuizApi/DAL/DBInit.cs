@@ -11,6 +11,7 @@ public static class DBInit
     {
         using var serviceScope = app.ApplicationServices.CreateScope();
         QuizDbContext context = serviceScope.ServiceProvider.GetRequiredService<QuizDbContext>();
+        context.Database.EnsureCreated();
         var userManager = serviceScope.ServiceProvider.GetRequiredService<UserManager<AuthUser>>();
         var roleManager = serviceScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
